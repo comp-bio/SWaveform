@@ -1,0 +1,74 @@
+$max-row-width: 7000;
+$grid-columns: 12;
+
+$XL: 1920;
+$L: 1290;
+$M: 950;
+$S: 768;
+$XS: 576;
+
+$grid: (
+        XXL: (to: $max-row-width, from: $XL, gutter: 12),
+        XL:  (to: $XL, from: $L,  gutter: 12),
+        L:   (to: $L,  from: $M,  gutter: 12),
+        M:   (to: $M,  from: $S,  gutter: 12),
+        S:   (to: $S,  from: $XS, gutter: 12),
+        XS:  (to: $XS, from: 0,   gutter: 0)
+);
+
+@mixin respond-down($name)
+{
+  @if map-has-key($grid, $name) {
+    $point: map-get($grid, $name);
+    @if map-has-key($point, to) {
+      @media (max-width: #{map-get($point, to)}px) {
+        @content;
+      }
+    }
+  } @else {
+    @warn "Unknown breakpoint '#{$name}'";
+  }
+}
+
+@mixin respond-up($name)
+{
+  @if map-has-key($grid, $name) {
+    $point: map-get($grid, $name);
+    @if map-has-key($point, from) {
+      @media (min-width: #{map-get($point, from)}px) {
+        @content;
+      }
+    }
+  } @else {
+    @warn "Unknown breakpoint '#{$name}'";
+  }
+}
+
+[data-debug="debug"]:after {
+  position: fixed;
+  padding: 5px;
+  opacity: 0.5;
+  background: #f00;
+  color: #fff;
+  border-radius: 5px;
+  left: 10px;
+  bottom: 10px;
+  z-index: 99999;
+  width: 24px;
+  height: 24px;
+  content: 'XXL';
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  font-family: sans-serif;
+  font-weight: bold;
+  line-height: 1em;
+  font-size: 14px;
+  @include respond-down(XL) { content: 'XL'; }
+  @include respond-down(L)  { content: 'L';  }
+  @include respond-down(M)  { content: 'M';  }
+  @include respond-down(S)  { content: 'S';  }
+  @include respond-down(XS) { content: 'XS'; }
+}
+
+:export { L: $L; M: $M; S: $S; XS: $XS; }
