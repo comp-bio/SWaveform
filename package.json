@@ -40,7 +40,8 @@
   },
   "scripts": {
     "server": "webpack serve --mode development --env development --hot --progress --inline --config webpack.config.js",
-    "build": "rm -f build/main-* && NODE_ENV=production webpack --config webpack.sdb.js",
+    "meta": "for svg in $(ls build/models/*svg); do rsvg-convert -w 1792 -h 896 \"$svg\" -o \"$svg\".png && rsvg-convert -w 256 -h 128 \"$svg\" -o \"$svg\".th.png; done;",
+    "build": "rm -f build/main-* && NODE_ENV=production webpack --config webpack.config.js",
     "py": "python3 server.py"
   }
 }

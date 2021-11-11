@@ -44,23 +44,23 @@ for chr in chrx:
     c = chr.replace('chr','')
     info['density'][c] = {'l': all, 'step': step}
 
-with open('data/overview.json', "w") as h:
+with open('build/overview.json', "w") as h:
     json.dump(info, h)
 
 # --------------------------------------------------------------------------- #
-if not os.path.isdir('data/models'):
-    os.mkdir('data/models')
+if not os.path.isdir('build/models'):
+    os.mkdir('build/models')
 
 for side in ['L', 'R']:
     for type in info['types']:
         echo('Type: %s (%s)\n' % (type, side))
         full, matrix, hmm = models(cur, type, side)
-        hmm_plot(hmm, matrix, 'data/models/plot.%s-%s.svg' % (type, side))
-        with open('data/models/full.%s-%s.json' % (type, side), "w") as h:
+        hmm_plot(hmm, matrix, 'build/models/plot.%s-%s.svg' % (type, side))
+        with open('build/models/full.%s-%s.json' % (type, side), "w") as h:
             json.dump(full, h)
-        with open('data/models/matrix.%s-%s.json' % (type, side), "w") as h:
+        with open('build/models/matrix.%s-%s.json' % (type, side), "w") as h:
             json.dump(matrix, h)
-        with open('data/models/hmm.%s-%s.json' % (type, side), "w") as h:
+        with open('build/models/hmm.%s-%s.json' % (type, side), "w") as h:
             json.dump(hmm, h)
 
 echo('Done\n')

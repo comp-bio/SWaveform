@@ -5,7 +5,8 @@ import os, sys
 import json
 import glob
 import sqlite3
-from flask import jsonify, request, Flask, send_from_directory, send_file
+from flask import jsonify, request, Flask, send_file, send_from_directory
+from gevent.pywsgi import WSGIServer
 
 app = Flask(__name__, static_url_path='', static_folder='build')
 
@@ -13,7 +14,7 @@ app = Flask(__name__, static_url_path='', static_folder='build')
 # --------------------------------------------------------------------------- #
 @app.route('/api/model/<variant>-<type>-<side>', methods=['GET', 'POST'])
 def model(variant, type, side):
-    model = './data/models/%s.%s-%s.json' % (variant, type, side)
+    model = './build/models/%s.%s-%s.json' % (variant, type, side)
     if os.path.isfile(model):
         return send_file(model, as_attachment=True)
     return jsonify({})
@@ -22,7 +23,7 @@ def model(variant, type, side):
 @app.route('/api/matrix', methods=['GET', 'POST'])
 def image():
     data = {}
-    for src in glob.glob(f"./data/models/*.svg.th.png"):
+    for src in glob.glob(f"./build/models/*.svg.th.png"):
         data[os.path.basename(src).split('.')[1]] = os.path.basename(src)
     return jsonify(data)
 
@@ -60,14 +61,20 @@ def root():
     return app.send_static_file('index.html')
 
 
-@app.route('/api/img/<path>')
-def img(path):
-    return send_from_directory('data/models', path)
+@app.route('/models/<path>')
+def models(path):
+    return send_from_directory('./build/models/', path)
 
 
 @app.route('/<path>/<any>')
 def all(path, any):
     return root()
 
+
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=9915)
+    port = 9915
+    if len(sys.argv) > 2 and sys.argv[2] == "DEV":
+        app.run(debug=True, host='127.0.0.1', port=port)
+    else:
+        http_server = WSGIServer(('', port), app)
+        http_server.serve_forever()

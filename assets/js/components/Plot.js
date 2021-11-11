@@ -4,7 +4,7 @@ import KaryotypeBar from "./KaryotypeBar";
 import Signal from "./Signal";
 
 const karyotype = require('../../../data/GRCh38.json')
-const overview = require('../../../data/overview.json')
+const overview = require('../../../build/overview.json')
 const d3 = require('d3')
 
 const types = Object.keys(overview['types']);

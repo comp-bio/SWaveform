@@ -32,7 +32,7 @@ class ModelsPage extends React.Component {
                         <span className={'tag'}>{name[0]}</span>
                         <span className={`tag side-${name[1]}`}>{name[1]}</span>
                     </div>
-                    <img src={`/api/img/${th[code]}`} />
+                    <img src={`/models/${th[code]}`} />
                     <div className={'hints hints-bottom'}>
                         <button className={'button'}>Details</button>
                         <a target={'_blank'} href={`/api/model/matrix-${name[0]}-${name[1]}`} className={'button'}>{download} Matrix</a>
@@ -50,7 +50,7 @@ class ModelsPage extends React.Component {
                         The intensity of the blue squares shows the number of signal values for a given point (Matrix.json).
                     </p>
                     <p className="lead">
-                        Markov models (HMM.json) were built on the basis of all signals of each type as follows:
+                        Markov models (HMM.json) were built for all signals of each type as follows:
                         For each value of the coverage signal at position <code>i</code>, the probabilities of transition to all possible values of position <code>i + 1</code> are calculated.
                         The probabilities are highlighted on the chart with lines. Line intensity is close to 1.
                     </p>
@@ -61,7 +61,7 @@ class ModelsPage extends React.Component {
                     <>
                         <h3 className="h3">{this.state.title}</h3>
                         <div className={'model-hmm'}>
-                            <img src={`/api/img/${this.state.hmm}`}  alt={'hmm'}/>
+                            <img src={`/models/${this.state.hmm}`}  alt={'hmm'}/>
                         </div>
                     </>
                 ) : ''}

@@ -4,7 +4,7 @@ note
 node_modules
 build
 yarn.lock
-signal_sample.db
+*.db
 upload.sh
 __pycache__
 
