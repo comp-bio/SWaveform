@@ -2,9 +2,10 @@ CREATE TABLE IF NOT EXISTS "target" (
   "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
   "name" text(255) NOT NULL,
   "file" text(255) NOT NULL,
-  "population" text(255) NOT NULL,
-  "region" text(255) NOT NULL,
-  "sex" text(255) NOT NULL,
+  "dataset" text(255) NOT NULL,
+  "population" text(255) NULL,
+  "region" text(255) NULL,
+  "sex" text(255) NULL,
   "meancov" real NULL
 );
 

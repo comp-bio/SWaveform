@@ -32,10 +32,17 @@ class DescriptionPage extends React.Component {
         );
     }
 
-    iter(name) {
-        return Object.keys(overview[name]).map((v, k) => {
-            return <div key={k}>{v}: <code>{overview[name][v]}</code></div>;
-        });
+    iter(name, ds) {
+        return (
+            <table className={'mini-table'}>
+                <thead><tr><th>Type</th><th>Count</th></tr></thead>
+                <tbody>{
+                    Object.keys(overview['ds'][ds][name]).filter(v => v != '').map((v, k) => {
+                        return <tr key={k}><td key={'v'+k}>{v}</td><td key={'k'+k}>{overview['ds'][ds][name][v]}</td></tr>
+                    })
+                }</tbody>
+            </table>
+        )
     }
 
     componentDidMount() {
@@ -93,14 +100,19 @@ class DescriptionPage extends React.Component {
 
                 <h2 className="h2">Statistics</h2>
                 <div className={'part stat'}>
-                    <h4 className={'h4'}>Total signals:</h4>
+                    <h4 className={'h4'}>Total signals in database:</h4>
                     <div className={'items'}><code>{overview.total.toLocaleString()}</code></div>
-
-                    <h4 className={'h4'}>Number of samples in populations:</h4>
-                    <div className={'items'}>{this.iter('populations')}</div>
-
-                    <h4 className={'h4'}>Number of signals grouped by the type of structural variation:</h4>
-                    <div className={'items'}>{this.iter('types')}</div>
+                    <div className={'dataset-groups'}>
+                        {Object.keys(overview['ds']).map(ds => {
+                            //let p = this.iter('populations', ds);
+                            return (
+                                <div className={'dataset-group'} key={ds}>
+                                    <h4 className={'h4'}>Dataset: <strong>{ds}</strong></h4>
+                                    {this.iter('types', ds)}
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
         );

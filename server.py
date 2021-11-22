@@ -12,9 +12,9 @@ app = Flask(__name__, static_url_path='', static_folder='build')
 
 
 # --------------------------------------------------------------------------- #
-@app.route('/api/model/<variant>-<type>-<side>', methods=['GET', 'POST'])
-def model(variant, type, side):
-    model = './build/models/%s.%s-%s.json' % (variant, type, side)
+@app.route('/api/model/<variant>-<ds>-<type>-<side>', methods=['GET', 'POST'])
+def model(variant, ds, type, side):
+    model = './build/models/%s.%s-%s-%s.json' % (variant, ds, type, side)
     if os.path.isfile(model):
         return send_file(model, as_attachment=True)
     return jsonify({})
@@ -24,7 +24,10 @@ def model(variant, type, side):
 def image():
     data = {}
     for src in glob.glob(f"./build/models/*.svg.th.png"):
-        data[os.path.basename(src).split('.')[1]] = os.path.basename(src)
+        name = os.path.basename(src).split('.')[1]
+        ds = name.split('-')[0]
+        if ds not in data: data[ds] = {}
+        data[ds][name] = os.path.basename(src)
     return jsonify(data)
 
 
@@ -35,11 +38,15 @@ def signal():
     cur = con.cursor()
 
     types = [t for t in e['types'] if e['types'][t]]
-    sql = ','.join(['?'] * len(types))
+    sql_t = ','.join(['?'] * len(types))
+
+    datasets = [t for t in e['datasets'] if e['datasets'][t]]
+    sql_d = ','.join(['?'] * len(datasets))
+
     cur.execute("SELECT s.id, s.start, s.end, s.type, s.side, s.coverage, t.name, t.population, t.meancov  FROM signal as s "
             "LEFT JOIN target AS t ON t.id = s.target_id "
-            f"WHERE (s.chr = ? OR s.chr = ?) AND s.start < ? AND s.end > ? AND type IN ({sql}) LIMIT 24",
-            tuple([e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types))
+            f"WHERE (s.chr = ? OR s.chr = ?) AND s.start < ? AND s.end > ? AND s.type IN ({sql_t}) AND t.dataset IN ({sql_d}) LIMIT 24",
+            tuple([e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types + datasets))
 
     result = []
     header = [i[0] for i in cur.description]

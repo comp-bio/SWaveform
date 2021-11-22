@@ -21,23 +21,32 @@ class ModelsPage extends React.Component {
 
     render() {
         const th = this.state['data:matrix'];
-        const matrix = Object.keys(th).map((code, k) => {
-            let name = code.split('-');
+        const matrix = Object.keys(th).map((ds, kds) => {
             return (
-                <div className={'model-item'} onClick={() => this.setState({
-                    'hmm': th[code].replace('.th.', '.'),
-                    'title': code
-                })} key={k}>
-                    <div className={'hints'}>
-                        <span className={'tag'}>{name[0]}</span>
-                        <span className={`tag side-${name[1]}`}>{name[1]}</span>
-                    </div>
-                    <img src={`/models/${th[code]}`} />
-                    <div className={'hints hints-bottom'}>
-                        <button className={'button'}>Details</button>
-                        <a target={'_blank'} href={`/api/model/matrix-${name[0]}-${name[1]}`} className={'button'}>{download} Matrix</a>
-                        <a target={'_blank'} href={`/api/model/hmm-${name[0]}-${name[1]}`} className={'button'}>{download} HMM</a>
-                    </div>
+                <div key={kds}>
+                    <h2 className="h2">Models ({ds})</h2>
+                    <div className={'model-items'}>{
+                        Object.keys(th[ds]).map((code, k) => {
+                            let name = code.split('-');
+                            return (
+                                <div className={'model-item'} onClick={() => this.setState({
+                                    'hmm': th[ds][code].replace('.th.', '.'),
+                                    'title': code
+                                })} key={k}>
+                                    <div className={'hints'}>
+                                        <span className={'tag'}>{name[1]}</span>
+                                        <span className={`tag side-${name[2]}`}>{name[2]}</span>
+                                    </div>
+                                    <img src={`/models/${th[ds][code]}`} />
+                                    <div className={'hints hints-bottom'}>
+                                        <button className={'button'}>Details</button>
+                                        <a target={'_blank'} href={`/api/model/mat-${name[0]}-${name[1]}-${name[2]}`} className={'button'}>{download} Matrix</a>
+                                        <a target={'_blank'} href={`/api/model/hmm-${name[0]}-${name[1]}-${name[2]}`} className={'button'}>{download} HMM</a>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    }</div>
                 </div>
             );
         });
@@ -55,8 +64,7 @@ class ModelsPage extends React.Component {
                         The probabilities are highlighted on the chart with lines. Line intensity is close to 1.
                     </p>
                 </div>
-                <h2 className="h2">Models</h2>
-                <div className={'model-items'}>{matrix}</div>
+                {matrix}
                 {this.state['hmm'] ? (
                     <>
                         <h3 className="h3">{this.state.title}</h3>

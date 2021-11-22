@@ -24,6 +24,7 @@ class Loader {
         'start': this.parent.state.start,
         'end': this.parent.state.end,
         'types': this.parent.state.types,
+        'datasets': this.parent.state.datasets,
       };
     }
 

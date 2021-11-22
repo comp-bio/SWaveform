@@ -57,6 +57,9 @@ class Variants:
                     sv_type = o.group(1)
                     stop = int(o.group(4))
 
+            if 'END' in record.INFO:
+                stop = int(record.INFO['END'])
+
             L, R = (min(start, stop), max(start, stop))
             yield [chr, L, R, sv_type, rec]
 

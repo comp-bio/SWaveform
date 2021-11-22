@@ -13,6 +13,8 @@ def hmm_plot(hmm, matrix, fname):
     # Density map
     for x, row in enumerate(matrix):
         t = sum(row)
+        if t == 0:
+            pass
         for y, value in enumerate(row):
             color = 'rgba(102, 139, 233, %f)' % (7 * float(value)/t)
             svg.write('<rect x="%d" y="%d" width="%d" height="%d" fill="%s" />' % (x * rect, y * rect, rect, rect, color))

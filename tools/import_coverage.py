@@ -25,7 +25,10 @@ for t_id, name, file in cur.fetchall():
 
     cur.execute(f"SELECT id, chr, start, end FROM signal WHERE target_id = {t_id:d}")
     for id, chr, start, end in cur.fetchall():
+        if chr[0:3] == 'chr': chr = chr[3:]
         cov_file = "%s/%s/%s.bcov" % (coverage_path, file, chr)
+        if not os.path.isfile(cov_file):
+            cov_file = "%s/%s/chr%s.bcov" % (coverage_path, file, chr)
         if not os.path.isfile(cov_file):
             notfound[cov_file] = True
             continue
