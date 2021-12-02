@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
-# Usage: python3 ./overview.py signal.db
 import os, sys
 import sqlite3
 import json
 from _functions import *
 from _model import *
-from hmm_plot import *
+from _hmm_plot import *
 
 
 con = False
@@ -22,27 +21,41 @@ if not con:
 # --------------------------------------------------------------------------- #
 ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
 info = {'total': list(ret)[0]}
-echo('Total: %d\n' % info['total'])
+echo('Total signals: %d\n' % info['total'])
 
-cur.execute("SELECT COUNT(*), population FROM target GROUP BY population")
-info['populations'] = {population:cnt for cnt, population in cur.fetchall()}
-echo('Populations: %d\n' % len(info['populations']))
-
-cur.execute("SELECT COUNT(*), type FROM signal GROUP BY type")
-info['types'] = {t:cnt for cnt,t in cur.fetchall()}
-echo('Types: %d\n' % len(info['types']))
+cur.execute("SELECT COUNT(*), dataset FROM target GROUP BY dataset")
+info['ds'] = {}
+echo('Datasets: \n')
+for cnt, ds in cur.fetchall():
+    info['ds'][ds] = {}
+    echo(' > %s - files: %d\n' % (ds, cnt), color='33')
 
 cur.execute(f"SELECT chr, MAX(end) FROM signal GROUP BY chr")
 chrx = {chr:mx for chr, mx in cur.fetchall()}
 
-info['density'] = {}
-for chr in chrx:
-    step = round(chrx[chr]/(1000-1))
-    cur.execute(f"SELECT COUNT(*), cast((`start`+256)/{step} as int) AS ro FROM signal WHERE chr = '{chr}' GROUP BY ro")
-    density = {int(pos):cnt for cnt, pos in cur.fetchall()}
-    all = [(0 if i not in density else density[i]) for i in range(0, 1000)]
-    c = chr.replace('chr','')
-    info['density'][c] = {'l': all, 'step': step}
+for ds in info['ds']:
+    echo('Dataset: %s\n' % ds)
+
+    cur.execute(f"SELECT COUNT(*), population FROM target WHERE dataset = '{ds}' GROUP BY population")
+    info['ds'][ds]['populations'] = {population:cnt for cnt, population in cur.fetchall()}
+    echo(' > Populations: %d\n' % len(info['ds'][ds]['populations']), color='33')
+
+    cur.execute(f"SELECT COUNT(signal.id), signal.type FROM signal "
+                f"LEFT JOIN target ON target.id = signal.target_id "
+                f"WHERE target.dataset = '{ds}' GROUP BY signal.type")
+    info['ds'][ds]['types'] = {t:cnt for cnt,t in cur.fetchall()}
+    echo(' > Types: %d\n' % len(info['ds'][ds]['types']), color='33')
+
+    info['ds'][ds]['density'] = {}
+    for chr in chrx:
+        step = round(chrx[chr]/(1000-1))
+        cur.execute(f"SELECT COUNT(*), cast((`start`+256)/{step} as int) AS ro FROM signal "
+                    f"LEFT JOIN target ON target.id = signal.target_id "
+                    f"WHERE signal.chr = '{chr}' and target.dataset = '{ds}' GROUP BY ro")
+        density = {int(pos):cnt for cnt, pos in cur.fetchall()}
+        all = [(0 if i not in density else density[i]) for i in range(0, 1000)]
+        c = chr.replace('chr','')
+        info['ds'][ds]['density'][c] = {'l': all, 'step': step}
 
 with open('build/overview.json', "w") as h:
     json.dump(info, h)
@@ -51,16 +64,18 @@ with open('build/overview.json', "w") as h:
 if not os.path.isdir('build/models'):
     os.mkdir('build/models')
 
-for side in ['L', 'R']:
-    for type in info['types']:
-        echo('Type: %s (%s)\n' % (type, side))
-        full, matrix, hmm = models(cur, type, side)
-        hmm_plot(hmm, matrix, 'build/models/plot.%s-%s.svg' % (type, side))
-        with open('build/models/full.%s-%s.json' % (type, side), "w") as h:
-            json.dump(full, h)
-        with open('build/models/matrix.%s-%s.json' % (type, side), "w") as h:
-            json.dump(matrix, h)
-        with open('build/models/hmm.%s-%s.json' % (type, side), "w") as h:
-            json.dump(hmm, h)
+echo('Models: \n')
+for ds in info['ds']:
+    for side in ['L', 'R', 'C']:
+        for type in info['ds'][ds]['types']:
+            matrix, hmm, total = models(cur, type, side, ds)
+            echo(' > %s - %s [%s] (total:%d)\n' % (ds, type, side, total), color='33')
+            if total < 32:
+                continue
+            hmm_plot(hmm, matrix, 'build/models/plot.%s-%s-%s.svg' % (ds, type, side))
+            with open('build/models/mat.%s-%s-%s.json' % (ds, type, side), "w") as h:
+                json.dump(matrix, h)
+            with open('build/models/hmm.%s-%s-%s.json' % (ds, type, side), "w") as h:
+                json.dump(hmm, h)
 
 echo('Done\n')

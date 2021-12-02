@@ -14,6 +14,7 @@ export const schema = {
         ['id',         'Primary ID'],
         ['name',       'Sample name in VCF file'],
         ['file',       '.cram file suffix'],
+        ['dataset',    'Name of source database'],
         ['population', 'Population name'],
         ['region',     'Population region'],
         ['sex',        'Sex'],

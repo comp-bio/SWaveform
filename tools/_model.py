@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 from _functions import *
 
-def models(cur, type, side):
-    full = [{} for i in range(0, 512)]
+def models(cur, type, side, ds):
     matrix = [[0 for j in range(0, 32)] for i in range(0, 64)]
     hmm = [{} for i in range(0, 63)]
 
-    cur.execute(f"SELECT chr, coverage FROM signal WHERE type = ? AND side = ?", (type, side,))
+    cur.execute(f"SELECT signal.chr, signal.coverage FROM signal "
+                f"LEFT JOIN target ON target.id = signal.target_id "
+                f"WHERE signal.type = ? AND signal.side = ? AND target.dataset = ?", (type, side, ds, ))
+
+    total = 0
     for chr, bin in cur.fetchall():
         if len(bin) == 0:
             continue
 
-        # Original
         sig = b2sig(bin)
-        for i,v in enumerate(sig):
-            if v not in full[i]: full[i][v] = 0
-            full[i][v] += 1
+        total += 1
 
         # Normalized
         n64 = normal(sig, 8, 32)
@@ -30,4 +30,4 @@ def models(cur, type, side):
             if b not in hmm[i][a]: hmm[i][a][b] = 0
             hmm[i][a][b] += 1
 
-    return (full, matrix, hmm, )
+    return (matrix, hmm, total, )

@@ -34,6 +34,10 @@ ul {
   }
 }
 
+thead {
+  background: #eee;
+}
+
 code {
   background-color: #eee;
   border-radius: 3px;
@@ -102,6 +106,21 @@ table {
   margin-bottom: 30px;
   .items {
     margin-bottom: 18px;
+  }
+}
+
+.dataset-groups {
+  display: flex;
+
+  .dataset-group {
+    margin-right: 20px;
+    .mini-table {
+      font-size: 13px;
+
+      tr td, tr th {
+        padding: 4px 6px;
+      }
+    }
   }
 }
 

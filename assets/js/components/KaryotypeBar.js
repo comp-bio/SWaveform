@@ -1,4 +1,5 @@
 import React from 'react';
+import overview from "../../../build/overview.json";
 const d3 = require('d3');
 
 const gradients = {
@@ -117,23 +118,26 @@ function KaryotypeBar(el, parent) {
     }
   });
 
-
   // Density
-  let line = d3.line().x(d => x(d[0])).y(d => y(d[1]));
-  let density_line = density.append('path')
-    .datum([])
-    .attr('class', 'density')
-    .attr('d', line);
+  Object.keys(parent.overview['ds'] || {}).map(ds => {
+    let line = d3.line().x(d => x(d[0])).y(d => y(d[1]));
+    let density_line = density.append('path')
+        .datum([])
+        .attr('class', 'density')
+        .attr('fill', parent.ds_color(ds))
+        .attr('fill-opacity', state.datasets[ds] ? 0.7 : 0.2)
+        .attr('d', line);
 
-  const dens = parent.overview.density[state.chr];
-  const m = d3.max(dens.l) * 0.5;
+    const dens = parent.overview['ds'][ds].density[state.chr];
+    const m = d3.max(dens.l) * 0.5;
 
-  let v = dens.l.map((v, i) => [i * dens.step + 1, v > m ? m : v]);
-  v.unshift([0,0]);
-  v.push([dens.l.length * dens.step, 0]);
+    let v = dens.l.map((v, i) => [i * dens.step + 1, v > m ? m : v]);
+    v.unshift([0,0]);
+    v.push([dens.l.length * dens.step, 0]);
 
-  y.domain([0, m]);
-  density_line.datum(v).attr('d', line);
+    y.domain([0, m]);
+    density_line.datum(v).attr('d', line);
+  });
 
 
   // Cursor events
