@@ -15,7 +15,7 @@ let timer = null;
 class Plot extends React.Component {
   constructor(props) {
     super(props);
-    this.ds_color = d3.scaleOrdinal().domain(Object.keys(overview['ds'])).range(d3.schemeTableau10);
+    this.ds_color = d3.scaleOrdinal().domain(Object.keys(overview['ds'])).range(d3.schemeDark2);
     this.karyotype = karyotype;
     this.overview = overview;
 

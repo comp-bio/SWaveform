@@ -93,7 +93,7 @@ cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?)", signals)
 con.commit()
 
 echo('Done%s\n' % (" " * 60))
-echo('> Variants:    %d\n' % len(signals))
+echo('> Signalss:    %d\n' % len(signals))
 echo('> New targets: %d\n' % len(targets))
 echo('> Samples not found: %s\n' % [k for k in samples_not_found])
 print(counts)

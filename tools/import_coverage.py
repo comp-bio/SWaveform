@@ -6,8 +6,8 @@ from _functions import *
 
 # --------------------------------------------------------------------------- #
 if len(sys.argv) < 3:
-    echo('Usage:   python3 %s [DB sqlite file] [coverage path]\n' % sys.argv[0])
-    echo('Example: python3 %s ./signal.db HG002/coverage\n\n' % sys.argv[0])
+    echo('Usage:   python3 %s [DB sqlite file] [coverage path] [dataset]\n' % sys.argv[0])
+    echo('Example: python3 %s ./signal.db HG002/coverage HGDP\n\n' % sys.argv[0])
     sys.exit(1)
 
 # --------------------------------------------------------------------------- #
@@ -16,7 +16,11 @@ con = sqlite3.connect(db_file)
 cur = con.cursor()
 
 # --------------------------------------------------------------------------- #
-cur.execute("SELECT id, name, file FROM target")
+if len(sys.argv) >= 4:
+    ds = sys.argv[3]
+    cur.execute(f"SELECT id, name, file FROM target WHERE dataset = '{ds}'")
+else:
+    cur.execute("SELECT id, name, file FROM target")
 notfound = {}
 total = 0
 for t_id, name, file in cur.fetchall():

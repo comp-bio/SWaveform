@@ -14,9 +14,14 @@ if len(sys.argv) > 1:
     cur = con.cursor()
 
 if not con:
-    echo('Usage:   python3 %s [DB sqlite file]\n' % sys.argv[0])
-    echo('Example: python3 %s ./signal.db\n\n' % sys.argv[0])
+    echo('Usage:   python3 %s [DB sqlite file] [filter]\n' % sys.argv[0])
+    echo('Example: python3 %s ./signal.db F\n\n' % sys.argv[0])
     sys.exit(1)
+
+# --------------------------------------------------------------------------- #
+if len(sys.argv) > 2:
+    pass
+    # ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
 
 # --------------------------------------------------------------------------- #
 ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
@@ -30,15 +35,17 @@ for cnt, ds in cur.fetchall():
     info['ds'][ds] = {}
     echo(' > %s - files: %d\n' % (ds, cnt), color='33')
 
-cur.execute(f"SELECT chr, MAX(end) FROM signal GROUP BY chr")
-chrx = {chr:mx for chr, mx in cur.fetchall()}
-
 for ds in info['ds']:
     echo('Dataset: %s\n' % ds)
 
     cur.execute(f"SELECT COUNT(*), population FROM target WHERE dataset = '{ds}' GROUP BY population")
     info['ds'][ds]['populations'] = {population:cnt for cnt, population in cur.fetchall()}
     echo(' > Populations: %d\n' % len(info['ds'][ds]['populations']), color='33')
+
+    cur.execute(f"SELECT chr, MAX(end) FROM signal "
+                f"LEFT JOIN target ON target.id = signal.target_id "
+                f"WHERE target.dataset = '{ds}' GROUP BY chr")
+    chrx = {chr:mx for chr, mx in cur.fetchall()}
 
     cur.execute(f"SELECT COUNT(signal.id), signal.type FROM signal "
                 f"LEFT JOIN target ON target.id = signal.target_id "
@@ -58,7 +65,7 @@ for ds in info['ds']:
         info['ds'][ds]['density'][c] = {'l': all, 'step': step}
 
 with open('build/overview.json', "w") as h:
-    json.dump(info, h)
+        json.dump(info, h)
 
 # --------------------------------------------------------------------------- #
 if not os.path.isdir('build/models'):
