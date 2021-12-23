@@ -30,14 +30,14 @@ info = get_lines(src_table)
 head = next(info)
 for line in info:
     i = dict(zip(head, line))
-    for k in ['population', 'region', 'sex', 'gt']:
+    for k in ['population', 'region', 'sex', 'gt', 'genome_version']:
         if k not in i: i[k] = ''
     obj = cur.execute(f"SELECT * FROM target WHERE name = '{i['name']}' and dataset = '{i['dataset']}'").fetchone()
     if obj:
         target_id = obj[0]
     if obj is None:
-        cur.execute("INSERT INTO target VALUES (?,?,?,?,?,?,?,?)",
-            (None, i['name'], i['sample'], i['dataset'], i['population'], i['region'], i['sex'], i['meancov'],))
+        cur.execute("INSERT INTO target VALUES (?,?,?,?,?,?,?,?,?)",
+            (None, i['name'], i['sample'], i['dataset'], i['genome_version'], i['population'], i['region'], i['sex'], i['meancov'],))
         target_id = cur.lastrowid
         targets.append(i['name'])
 

@@ -7,11 +7,11 @@ from vcf2score import Variants
 
 # --------------------------------------------------------------------------- #
 if len(sys.argv) < 5:
-    echo('Usage:   python3 %s [DB sqlite file] [vcf file] [metadata] [dataset name]\n' % sys.argv[0])
-    echo('Example: python3 %s ./signal.db ./sv.vcf hgdp_structural_variation/HGDP.metadata HGDP\n\n' % sys.argv[0])
+    echo('Usage:   python3 %s [DB sqlite file] [vcf file] [metadata] [dataset name] [genome version]\n' % sys.argv[0])
+    echo('Example: python3 %s ./signal.db ./sv.vcf hgdp_structural_variation/HGDP.metadata HGDP GRCh37\n\n' % sys.argv[0])
     sys.exit(1)
 
-db_file, vcf_file, meta, dataset = sys.argv[1:5]
+db_file, vcf_file, meta, dataset, genome_version = sys.argv[1:6]
 offset = 256
 
 # --------------------------------------------------------------------------- #
@@ -73,8 +73,8 @@ for chr, L, R, sv_type, rec in reader.info():
         if obj:
             target_id = obj[0]
         if obj is None:
-            cur.execute("INSERT INTO target VALUES (?,?,?,?,?,?,?,?)",
-                (None, name, samples[name]['sample'], dataset, samples[name]['population'], samples[name]['region'], samples[name]['sex'], samples[name]['meancov'],))
+            cur.execute("INSERT INTO target VALUES (?,?,?,?,?,?,?,?,?)",
+                (None, name, samples[name]['sample'], dataset, genome_version, samples[name]['population'], samples[name]['region'], samples[name]['sex'], samples[name]['meancov'],))
             target_id = cur.lastrowid
             targets.append(name)
 

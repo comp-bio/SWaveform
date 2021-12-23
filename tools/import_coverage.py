@@ -21,8 +21,10 @@ if len(sys.argv) >= 4:
     cur.execute(f"SELECT id, name, file FROM target WHERE dataset = '{ds}'")
 else:
     cur.execute("SELECT id, name, file FROM target")
+
 notfound = {}
 total = 0
+no_coverage = 0
 for t_id, name, file in cur.fetchall():
     total += 1
     echo('Target: %s -> %s [%d]%s\r' % (name, file, total, " " * 60))
@@ -36,9 +38,14 @@ for t_id, name, file in cur.fetchall():
         if not os.path.isfile(cov_file):
             notfound[cov_file] = True
             continue
+        bytes = 2 * (end - start + 1)
         with open(cov_file, 'rb') as f:
             f.seek(start * 2)
-            bin_data = f.read(2 * (end - start + 1))
+            bin_data = f.read(bytes)
+        if bin_data == bytearray([0 for i in range(bytes)]):
+            cur.execute(f"DELETE FROM signal WHERE id = ?", (id,))
+            no_coverage += 1
+            continue
         cur.execute(f"UPDATE signal set coverage = ? WHERE id = ?", (bin_data, id,))
 
 con.commit()
@@ -46,3 +53,4 @@ echo('Done%s\n' % (" " * 60))
 
 skp = " ".join([f for f in notfound])
 if skp != "": echo('Chromosome coverage files not found:\n%s\n' % skp)
+echo('No coverage: %d\n' % no_coverage)

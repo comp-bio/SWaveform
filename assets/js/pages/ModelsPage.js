@@ -1,5 +1,5 @@
 import React from 'react';
-import Loader from "../components/Loader";
+import axios from "axios";
 
 const download = (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-download" viewBox="0 0 16 16">
@@ -11,48 +11,21 @@ const download = (
 class ModelsPage extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {'data:matrix': {}, 'hmm': false, 'title': false};
-        this.loader = new Loader(this);
+        this.state = {'th': {}, 'hmm': false, 'title': false};
     }
 
     componentDidMount() {
-        this.loader.get('matrix');
+        axios({
+            url: `/api/matrix`,
+            method: 'get'
+        }).then((res) => {
+            this.setState({'th': res.data});
+        });
     }
 
     render() {
-        const th = this.state['data:matrix'];
-        const matrix = Object.keys(th).map((ds, kds) => {
-            return (
-                <div key={kds}>
-                    <h2 className="h2">Models ({ds})</h2>
-                    <div className={'model-items'}>{
-                        Object.keys(th[ds]).map((code, k) => {
-                            let name = code.split('-');
-                            return (
-                                <div className={'model-item'} onClick={() => this.setState({
-                                    'hmm': th[ds][code].replace('.th.', '.'),
-                                    'title': code
-                                })} key={k}>
-                                    <div className={'hints'}>
-                                        <span className={'tag'}>{name[1]}</span>
-                                        <span className={`tag side-${name[2]}`}>{name[2]}</span>
-                                    </div>
-                                    <img src={`/models/${th[ds][code]}`} />
-                                    <div className={'hints hints-bottom'}>
-                                        <button className={'button'}>Details</button>
-                                        <a target={'_blank'} href={`/api/model/mat-${name[0]}-${name[1]}-${name[2]}`} className={'button'}>{download} Matrix</a>
-                                        <a target={'_blank'} href={`/api/model/hmm-${name[0]}-${name[1]}-${name[2]}`} className={'button'}>{download} HMM</a>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    }</div>
-                </div>
-            );
-        });
-
         return (
-            <div>
+            <>
                 <div className={'part'}>
                     <p className="lead">
                         All signals are compressed to a 64x32 matrix. All matrices for all signals are summed and normalized.
@@ -64,16 +37,48 @@ class ModelsPage extends React.Component {
                         The probabilities are highlighted on the chart with lines. Line intensity is close to 1.
                     </p>
                 </div>
-                {matrix}
-                {this.state['hmm'] ? (
-                    <>
-                        <h3 className="h3">{this.state.title}</h3>
+                {Object.keys(this.state['th']).map((ds, kds) => {
+                    return (
+                        <div key={kds}>
+                            <h2 className="h2">Models ({ds})</h2>
+                            <div className={'model-items'}>{
+                                Object.keys(this.state['th'][ds]).map((code, k) => {
+                                    let name = code.split('-');
+                                    return (
+                                        <div className={'model-item'} onClick={() => this.setState({
+                                            'hmm': this.state['th'][ds][code].replace('.th.', '.'),
+                                            'title': code
+                                        })} key={k}>
+                                            <div className={'hints'}>
+                                                <span className={'tag'}>{name[1]}</span>
+                                                <span className={`tag side-${name[2]}`}>{name[2]}</span>
+                                            </div>
+                                            <img src={`/models/${this.state['th'][ds][code]}`} />
+                                            <div className={'hints hints-bottom'}>
+                                                <button className={'button'}>Details</button>
+                                                <a target={'_blank'} href={`/api/model/mat-${name[0]}-${name[1]}-${name[2]}`} className={'button'}>{download} Matrix</a>
+                                                <a target={'_blank'} href={`/api/model/hmm-${name[0]}-${name[1]}-${name[2]}`} className={'button'}>{download} HMM</a>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            }</div>
+                        </div>
+                    );
+                })}
+                <div className={'modal ' + (this.state['hmm'] ? 'visible' : '')}>
+                    <div className={'container'}>
+                        <div className={'modal-head'}>
+                            <span className="modal-title">{this.state.title}</span>
+                            <a className={'modal-close'} onClick={() => this.setState({'hmm': false})}><span>×</span></a>
+                        </div>
                         <div className={'model-hmm'}>
                             <img src={`/models/${this.state.hmm}`}  alt={'hmm'}/>
                         </div>
-                    </>
-                ) : ''}
-            </div>
+                    </div>
+                    <div onClick={() => this.setState({'hmm': false})} className={'bg'} />
+                </div>
+            </>
         );
     }
 }
