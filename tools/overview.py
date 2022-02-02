@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import os, sys
+import os, sys, glob
 import sqlite3
 import json
 from _functions import *
@@ -19,28 +19,28 @@ if not con:
     sys.exit(1)
 
 # --------------------------------------------------------------------------- #
-no_signal = cur.execute("SELECT COUNT(*) FROM signal WHERE coverage = ''").fetchone()
-echo('Total variants without coverage data: %d\n' % list(no_signal)[0])
-
-if len(sys.argv) > 2 and sys.argv[2] == 'F':
+if len(sys.argv) > 2:
+    no_cov = cur.execute("SELECT COUNT(*) FROM signal WHERE coverage = ''").fetchone()[0]
+    echo('No coverage signals: %d\n' % no_cov)
     cur.execute("DELETE FROM signal WHERE coverage = ''")
     con.commit()
-    echo('-> Variants removed!\n')
+
+karyotypes = {}
+for js in glob.glob(os.path.dirname(os.path.abspath(__file__)) + "/../data/*.json"):
+    kt = open(js, 'r')
+    karyotypes[os.path.basename(js).split('.')[0]] = json.load(kt)
 
 # --------------------------------------------------------------------------- #
 ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
 info = {'total': list(ret)[0]}
 echo('Total signals: %d\n' % info['total'])
 
-cur.execute("SELECT COUNT(*), dataset FROM target GROUP BY dataset")
+cur.execute("SELECT COUNT(*), dataset, genome_version FROM target GROUP BY dataset")
 info['ds'] = {}
 echo('Datasets: \n')
-for cnt, ds in cur.fetchall():
-    info['ds'][ds] = {}
+for cnt, ds, genome_version in cur.fetchall():
+    info['ds'][ds] = {'genome': genome_version}
     echo(' > %s - files: %d\n' % (ds, cnt), color='33')
-
-cur.execute(f"SELECT chr, MAX(end) FROM signal GROUP BY chr")
-chrx = {chr:mx for chr, mx in cur.fetchall()}
 
 for ds in info['ds']:
     echo('Dataset: %s\n' % ds)
@@ -56,18 +56,20 @@ for ds in info['ds']:
     echo(' > Types: %d\n' % len(info['ds'][ds]['types']), color='33')
 
     info['ds'][ds]['density'] = {}
-    for chr in chrx:
-        step = round(chrx[chr]/(1000-1))
+    chrom = karyotypes[ info['ds'][ds]['genome'] ]
+    for chr in chrom:
+        chr_len = chrom[chr][-1][1]
+        step = round(chr_len/(1000-1))
         cur.execute(f"SELECT COUNT(*), cast((`start`+256)/{step} as int) AS ro FROM signal "
                     f"LEFT JOIN target ON target.id = signal.target_id "
-                    f"WHERE signal.chr = '{chr}' and target.dataset = '{ds}' GROUP BY ro")
+                    f"WHERE (signal.chr = '{chr}' or signal.chr = 'chr{chr}') and target.dataset = '{ds}' GROUP BY ro")
         density = {int(pos):cnt for cnt, pos in cur.fetchall()}
         all = [(0 if i not in density else density[i]) for i in range(0, 1000)]
         c = chr.replace('chr','')
         info['ds'][ds]['density'][c] = {'l': all, 'step': step}
 
 with open('build/overview.json', "w") as h:
-    json.dump(info, h)
+        json.dump(info, h)
 
 # --------------------------------------------------------------------------- #
 if not os.path.isdir('build/models'):

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS "target" (
   "name" text(255) NOT NULL,
   "file" text(255) NOT NULL,
   "dataset" text(255) NOT NULL,
+  "genome_version" text(255),
   "population" text(255) NULL,
   "region" text(255) NULL,
   "sex" text(255) NULL,

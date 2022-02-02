@@ -16,7 +16,9 @@ ReactDOM.render(
     <Router>
         <div className={'container'}>
             <header className={'header'}>
-                <h1 className="h1"><NavLink to={`/`}>Signal Storage</NavLink></h1>
+                <h1 className="h1">
+                    <NavLink to={`/`}>Aberrations Coverage Repository</NavLink>
+                </h1>
                 <nav className={'nav'}>
                     <NavLink className={'link'} exact activeClassName={'active'} to={`/`}>
                         <span>Overview</span>

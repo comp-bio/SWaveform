@@ -13,17 +13,20 @@ const gradients = {
 
 function KaryotypeBar(el, parent) {
   const node = d3.select(el).node();
-  if (!node) return ;
+  const state = parent.state;
 
-  console.log('Karyotype [+]');
+  if (!node) return "Error";
+  if (!state.karyotype) return "Error";
 
-  let state = parent.state;
+  console.log('Karyotype [+]', state.karyotype);
+
   const width = node.getBoundingClientRect().width;
-  const map = parent.karyotype[state.chr] || [];
+  const map = state.karyotype[state.chr] || [];
   const centre = map.filter(box => box[3] === 'acen');
-  const chr_size = map[map.length - 1][1];
 
   if (centre.length === 0) return;
+  const chr_size = map[map.length - 1][1];
+
 
   let x = d3.scaleLinear().range([0, width]).domain([0, chr_size]);
   let y = d3.scaleLinear().range([60, 0]).domain([0, 20]);
@@ -119,25 +122,27 @@ function KaryotypeBar(el, parent) {
   });
 
   // Density
-  Object.keys(parent.overview['ds'] || {}).map(ds => {
-    let line = d3.line().x(d => x(d[0])).y(d => y(d[1]));
-    let density_line = density.append('path')
-        .datum([])
-        .attr('class', 'density')
-        .attr('fill', parent.ds_color(ds))
-        .attr('fill-opacity', state.datasets[ds] ? 0.7 : 0.2)
-        .attr('d', line);
+  let ds = state.dataset;
+  // Object.keys(parent.overview['ds'] || {}).map(ds => {
+  let line = d3.line().x(d => x(d[0])).y(d => y(d[1]));
+  let density_line = density.append('path')
+      .datum([])
+      .attr('class', 'density')
+      .attr('fill', '#000')
+      //.attr('fill', parent.ds_color(ds))
+      //.attr('fill-opacity', state.datasets[ds] ? 0.7 : 0.2)
+      .attr('fill-opacity', 0.7)
+      .attr('d', line);
 
-    const dens = parent.overview['ds'][ds].density[state.chr];
-    const m = d3.max(dens.l) * 0.5;
+  const dens = parent.overview['ds'][ds].density[state.chr];
+  const m = d3.max(dens.l) * 0.5;
 
-    let v = dens.l.map((v, i) => [i * dens.step + 1, v > m ? m : v]);
-    v.unshift([0,0]);
-    v.push([dens.l.length * dens.step, 0]);
+  let v = dens.l.map((v, i) => [i * dens.step + 1, v > m ? m : v]);
+  v.unshift([0,0]);
+  v.push([dens.l.length * dens.step, 0]);
 
-    y.domain([0, m]);
-    density_line.datum(v).attr('d', line);
-  });
+  y.domain([0, m]);
+  density_line.datum(v).attr('d', line);
 
 
   // Cursor events

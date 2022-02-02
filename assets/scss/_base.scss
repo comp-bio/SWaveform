@@ -163,6 +163,17 @@ table {
   border-bottom: 1px solid #eee;
   margin-bottom: 20px;
 
+  .h1 {
+    strong {
+      display: block;
+      font-weight: normal;
+    }
+    small {
+      font-size: 14px;
+      line-height: 1.4em;
+    }
+  }
+
   .nav {
     .link {
       padding: 5px 10px;
@@ -229,6 +240,13 @@ table {
 
 .space {
   margin-bottom: 30px;
+}
+
+.load-more {
+  padding: 20px;
+  text-align: center;
+  width: 100%;
+  font-size: 14px;
 }
 
 .items {
