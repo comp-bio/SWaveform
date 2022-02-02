@@ -14,9 +14,18 @@ if len(sys.argv) > 1:
     cur = con.cursor()
 
 if not con:
-    echo('Usage:   python3 %s [DB sqlite file]\n' % sys.argv[0])
-    echo('Example: python3 %s ./signal.db\n\n' % sys.argv[0])
+    echo('Usage:   python3 %s [DB sqlite file] [filter (F)]\n' % sys.argv[0])
+    echo('Example: python3 %s ./signal.db F\n\n' % sys.argv[0])
     sys.exit(1)
+
+# --------------------------------------------------------------------------- #
+no_signal = cur.execute("SELECT COUNT(*) FROM signal WHERE coverage = ''").fetchone()
+echo('Total variants without coverage data: %d\n' % list(no_signal)[0])
+
+if len(sys.argv) > 2 and sys.argv[2] == 'F':
+    cur.execute("DELETE FROM signal WHERE coverage = ''")
+    con.commit()
+    echo('-> Variants removed!\n')
 
 # --------------------------------------------------------------------------- #
 ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
