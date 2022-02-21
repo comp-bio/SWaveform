@@ -49,10 +49,13 @@ for ds in info['ds']:
     info['ds'][ds]['populations'] = {population:cnt for cnt, population in cur.fetchall()}
     echo(' > Populations: %d\n' % len(info['ds'][ds]['populations']), color='33')
 
-    cur.execute(f"SELECT COUNT(signal.id), signal.type FROM signal "
+    cur.execute(f"SELECT COUNT(signal.id), signal.type, target.population FROM signal "
                 f"LEFT JOIN target ON target.id = signal.target_id "
-                f"WHERE target.dataset = '{ds}' GROUP BY signal.type")
-    info['ds'][ds]['types'] = {t:cnt for cnt,t in cur.fetchall()}
+                f"WHERE target.dataset = '{ds}' GROUP BY signal.type, target.population")
+    info['ds'][ds]['types'] = {}
+    for cnt, tp, population in cur.fetchall():
+        if tp not in info['ds'][ds]['types']: info['ds'][ds]['types'][tp] = {}
+        info['ds'][ds]['types'][tp][population] = cnt
     echo(' > Types: %d\n' % len(info['ds'][ds]['types']), color='33')
 
     info['ds'][ds]['density'] = {}
@@ -84,8 +87,14 @@ for ds in info['ds']:
             if total < 32:
                 continue
             hmm_plot(hmm, matrix, 'build/models/plot.%s-%s-%s.svg' % (ds, type, side))
-            with open('build/models/mat.%s-%s-%s.json' % (ds, type, side), "w") as h:
-                json.dump(matrix, h)
+
+            with open('build/models/heatmap.%s-%s-%s.tsv' % (ds, type, side), "w") as h:
+                write_matrix(matrix, h)
+
+            with open('build/models/hmm.%s-%s-%s.tsv' % (ds, type, side), "w") as h:
+                for matrix in hmm:
+                    write_matrix(matrix, h, "\n")
+
             with open('build/models/hmm.%s-%s-%s.json' % (ds, type, side), "w") as h:
                 json.dump(hmm, h)
 

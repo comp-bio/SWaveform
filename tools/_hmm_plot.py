@@ -11,20 +11,22 @@ def hmm_plot(hmm, matrix, fname):
     svg.write('<rect x="0" y="0" width="%d" height="%d" fill="#FFF" />' % (64 * rect, 32 * rect, ))
 
     # Density map
-    for x, row in enumerate(matrix):
-        t = sum(row)
+    for x, col in enumerate(matrix):
+        t = sum(col)
         if t == 0:
             pass
-        for y, value in enumerate(row):
+        for y, value in enumerate(col):
+            y = 31 - int(y)
             color = 'rgba(102, 139, 233, %f)' % (7 * float(value)/t)
             svg.write('<rect x="%d" y="%d" width="%d" height="%d" fill="%s" />' % (x * rect, y * rect, rect, rect, color))
 
     # Probability
-    for x in range(0, 63):
-        for y in hmm[x]:
-            t = sum([hmm[x][y][v] for v in hmm[x][y]])
-            for y2 in hmm[x][y]:
-                val = float(hmm[x][y][y2])/t
+    for x, matrix in enumerate(hmm):
+        for y, src in enumerate(matrix):
+            t = sum(src)
+            if t == 0: continue
+            for y2, dst in enumerate(src):
+                val = float(dst)/t
                 x1, x2 = [int(x) * rect + rect/2, (int(x) + 1) * rect + rect/2]
                 y1, y2 = [(31-int(y)) * rect + rect/2, (31-int(y2)) * rect + rect/2]
                 color = 'rgba(%d, 0, %d, %f)' % (180 if y1 < y2 else 0, 180 if y1 > y2 else 0, val, )
