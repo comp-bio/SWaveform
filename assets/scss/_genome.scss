@@ -120,10 +120,11 @@
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
 
   &.selector {
-    padding: 4px 14px;
+    padding: 4px 14px 4px 8px;
+    text-align: left;
 
     @include respond-down(M) {
-      padding: 4px 8px;
+      padding: 4px 8px 4px 8px;
     }
   }
 

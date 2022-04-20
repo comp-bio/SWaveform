@@ -20,7 +20,7 @@ con = sqlite3.connect(db_file)
 cur = con.cursor()
 loc = os.path.dirname(os.path.realpath(__file__))
 with open("%s/../data/schema.sql" % loc, 'r') as sql:
-    for req in sql.read().replace('\n', '').split(';'):
+    for req in sql.read().split(';'):
         cur.execute(req)
 
 # --------------------------------------------------------------------------- #
@@ -78,18 +78,25 @@ for chr, L, R, sv_type, rec in reader.info():
             target_id = cur.lastrowid
             targets.append(name)
 
+        if sv_type == 'CNV':
+            if 'data' in sample.__dir__() and 'CNF' in sample.data.__dir__():
+                sv_type = 'CNV_gain' if sample.data.CNF > 1 else 'CNV_loss'
+
+        if sv_type == 'INS':
+            L = R
+
         if sv_type not in counts:
             counts[sv_type] = 0
 
         counts[sv_type] += 1
         if R - L <= 32:
             C = round(R - L / 2)
-            signals.append((None, target_id, chr, C - offset, C + offset - 1, sv_type, 'C', gt, ''))
+            signals.append((None, target_id, chr, C - offset, C + offset - 1, sv_type, 'C', R - L, gt, ''))
         else:
-            signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'L', gt, ''))
-            signals.append((None, target_id, chr, R - offset, R + offset - 1, sv_type, 'R', gt, ''))
+            signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'L', R - L, gt, ''))
+            signals.append((None, target_id, chr, R - offset, R + offset - 1, sv_type, 'R', R - L, gt, ''))
 
-cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?)", signals)
+cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?,?)", signals)
 con.commit()
 
 echo('Done%s\n' % (" " * 60))

@@ -44,13 +44,13 @@ for line in info:
     L, R = [int(i['start']), int(i['end'])]
     if R - L <= 32:
         C = round(R - L / 2)
-        signals.append((None, target_id, i['chr'], C - offset, C + offset - 1, i['type'], 'C', i['gt'], ''))
+        signals.append((None, target_id, i['chr'], C - offset, C + offset - 1, i['type'], 'C', R - L, i['gt'], ''))
     else:
+        signals.append((None, target_id, i['chr'], R - offset, R + offset - 1, i['type'], 'R', R - L, i['gt'], ''))
         if L - offset > 0:
-            signals.append((None, target_id, i['chr'], L - offset, L + offset - 1, i['type'], 'L', i['gt'], ''))
-        signals.append((None, target_id, i['chr'], R - offset, R + offset - 1, i['type'], 'R', i['gt'], ''))
+            signals.append((None, target_id, i['chr'], L - offset, L + offset - 1, i['type'], 'L', R - L, i['gt'], ''))
 
-cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?)", signals)
+cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?,?)", signals)
 con.commit()
 
 echo('Done%s\n' % (" " * 60))

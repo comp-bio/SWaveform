@@ -43,12 +43,18 @@ def signal():
     # datasets = [t for t in e['datasets'] if e['datasets'][t]]
     # sql_d = ','.join(['?'] * len(datasets))
     offset = int(e['page']) * 24
+    values = [e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types + [e['dataset']]
+
+    filter_by_population = ""
+    if e['population'] != "":
+        filter_by_population = f"AND t.population = ? "
+        values.append(e['population'])
 
     cur.execute("SELECT s.id, s.start, s.end, s.type, s.side, s.coverage, t.name, t.population, t.meancov  FROM signal as s "
             "LEFT JOIN target AS t ON t.id = s.target_id "
             f"WHERE (s.chr = ? OR s.chr = ?) AND s.start < ? AND s.end > ? AND s.type IN ({sql_t}) AND t.dataset = ? "
-            f"ORDER BY s.start LIMIT 24 OFFSET {offset}",
-            tuple([e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types + [e['dataset']]))
+            f"{filter_by_population}"
+            f"ORDER BY s.start LIMIT 24 OFFSET {offset}", tuple(values))
 
     result = []
     header = [i[0] for i in cur.description]

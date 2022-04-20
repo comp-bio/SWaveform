@@ -82,7 +82,7 @@ echo('Models: \n')
 for ds in info['ds']:
     for side in ['L', 'R', 'C']:
         for type in info['ds'][ds]['types']:
-            matrix, hmm, total = models(cur, type, side, ds)
+            matrix, hmm, mean_hist, total = models(cur, type, side, ds)
             echo(' > %s - %s [%s] (total:%d)\n' % (ds, type, side, total), color='33')
             if total < 32:
                 continue
@@ -90,6 +90,9 @@ for ds in info['ds']:
 
             with open('build/models/heatmap.%s-%s-%s.tsv' % (ds, type, side), "w") as h:
                 write_matrix(matrix, h)
+
+            with open('build/models/hist.%s-%s-%s.tsv' % (ds, type, side), "w") as h:
+                h.write("\n".join([("%.5f" % v) for v in mean_hist]))
 
             with open('build/models/hmm.%s-%s-%s.tsv' % (ds, type, side), "w") as h:
                 for matrix in hmm:

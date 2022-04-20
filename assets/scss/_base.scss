@@ -142,9 +142,45 @@ table {
 
 .h2 {
   font-size: 1.6em;
+  display: flex;
+  align-items: center;
+
   @include respond-down(L) {
     font-size: 1.4em;
   }
+
+  .button {
+    margin-right: 10px;
+  }
+
+  .group {
+    margin-left: 20px;
+    margin-top: -4px;
+
+    &.tabs {
+      .button {
+        margin-right: -1px;
+        border-radius: 0;
+        position: relative;
+
+        &:first-child {
+          border-top-left-radius: 3px;
+          border-bottom-left-radius: 3px;
+        }
+        &:last-child {
+          border-top-right-radius: 3px;
+          border-bottom-right-radius: 3px;
+        }
+        &.active {
+          z-index: 10;
+        }
+        &:hover {
+          z-index: 20;
+        }
+      }
+    }
+  }
+
 }
 
 .h4 {

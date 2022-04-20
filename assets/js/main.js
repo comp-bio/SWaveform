@@ -41,7 +41,7 @@ ReactDOM.render(
             </Switch>
         </section>
         <footer className={'container'}>
-            <div className={'bottom'}>2020–2021г.</div>
+            <div className={'bottom'}>2020–2022г.</div>
         </footer>
     </Router>,
     document.getElementById('app')

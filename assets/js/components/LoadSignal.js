@@ -32,6 +32,7 @@ class LoadSignal {
                 'end': this.parent.state.end,
                 'types': this.parent.state.types,
                 'dataset': this.parent.state.dataset,
+                'population': this.parent.state.population,
                 'page': this.page,
             },
             cancelToken: this.cancel.token
