@@ -45,15 +45,20 @@ def join(L):
 
 
 def plot_motif(js, suffix = '', x=32, y=32):
+    bbox = dict(boxstyle="round", fc="white", alpha=0.7, ec="k", lw=1)
     with open(js, 'r') as f:
         A, B = json.load(f)
         name = os.path.basename(js).replace('motif_HGDP_', '').replace(suffix, '')
-        fig, axs = plt.subplots(2, 5, figsize=(5*3, 2*3))
+        fig, axs = plt.subplots(2, 5, figsize=(5*(x/8), 2*(y/8)))
         for col, group, cls in zip(axs, [group_motif(A, x, y), group_motif(B, x, y)], ['A', 'B']):
+            mtn = 1
             for ax, g in zip(col, group):
                 mat, note = join(g)
                 ax.matshow(np.transpose(mat), origin='lower')
-                ax.set_title(f'{name} [{cls}] • {note}')
+                ax.set_title(f'{cls} • {mtn} MS-motif')
+                ax.text(1, 1, note, ha="left", va="bottom", size=10, bbox=bbox)
+                mtn += 1
+                
         fig.tight_layout()
         fig.show()
         plt.show()
