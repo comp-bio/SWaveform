@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 
-const download = (
+const icon = (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-download" viewBox="0 0 16 16">
         <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
         <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
@@ -11,16 +11,38 @@ const download = (
 class ModelsPage extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {'th': {}, 'hmm': false, 'title': false};
+        this.state = {'models': [], 'meta': [], 'hmm': false, 'title': false};
     }
 
     componentDidMount() {
-        axios({
-            url: `/api/matrix`,
-            method: 'get'
-        }).then((res) => {
-            this.setState({'th': res.data});
+        axios({url: `/api/overview`, method: 'get'}).then((res) => {
+            this.setState(res.data);
+            // res.data.models
+            res.data.meta.map(src => {
+                axios({url: `/downloads/${src}`, method: 'get'}).then((res) => {
+                    this.setState({[`src:${src}`]: res.data})
+                });
+            });
         });
+    }
+    
+    gridPlot(C) {
+        if (!C) return '';
+        return (
+          <article className={'cluster'} key={C.name + C.part}>
+              <h5>{C.name} <code>{C.part}</code></h5>
+              <div className={'plot-list'}>
+                  <img className={'img'} src={`data:image/png;base64,${C.cluster}`}  alt={'Cluster'} />
+                  {C.motif.map(m => (
+                    <div key={m.file} className={'img'}>
+                        <img src={`data:image/png;base64,${m.plot}`} alt={'Motif'} />
+                        <a target={'_blank'} href={`/downloads/${m.file}`} className={'button'}>{icon} Download</a>
+                    </div>
+                  ))}
+              </div>
+              
+          </article>
+        );
     }
 
     render() {
@@ -37,35 +59,43 @@ class ModelsPage extends React.Component {
                         The probabilities are highlighted on the chart with lines. Line intensity is close to 1.
                     </p>
                 </div>
-                {Object.keys(this.state['th']).map((ds, kds) => {
+
+                <h2 className="h2">SV overview</h2>
+                <div className={'model-items'}>
+                    {this.state.models.map(src => {
+                        const code = src.replace('.svg.th.png', '').replace('plot.', '');
+                        const tag = code.substr(0, code.length - 2);
+                        const side = code.substr(-1);
+                        
+                        return (
+                          <div className={'model-item'} onClick={() => this.setState({
+                              'hmm': src.replace('.th.', '.'),
+                              'title': code
+                          })} key={src}>
+                              <div className={'hints'}>
+                                  <span className={'tag'}>{tag}</span>
+                                  <span className={`tag side-${side}`}>{side}</span>
+                              </div>
+                              <img src={`/models/${src}`} />
+                              <div className={'hints hints-bottom'}>
+                                  <button className={'button'}>Details</button>
+                                  <a target={'_blank'} href={`/api/model/mat`} className={'button'}>{icon} Matrix</a>
+                                  <a target={'_blank'} href={`/api/model/hmm`} className={'button'}>{icon} HMM</a>
+                              </div>
+                          </div>
+                        );
+                    })}
+                </div>
+    
+                <h2 className="h2">Found motifs</h2>
+                {this.state.meta.map(src => {
+                    const obj = this.state[`src:${src}`] || null;
+                    if (!obj) return <div key={src} className={'meta-item'}>{src}</div>;
                     return (
-                        <div key={kds}>
-                            <h2 className="h2">Models ({ds})</h2>
-                            <div className={'model-items'}>{
-                                Object.keys(this.state['th'][ds]).map((code, k) => {
-                                    let name = code.split('-');
-                                    return (
-                                        <div className={'model-item'} onClick={() => this.setState({
-                                            'hmm': this.state['th'][ds][code].replace('.th.', '.'),
-                                            'title': code
-                                        })} key={k}>
-                                            <div className={'hints'}>
-                                                <span className={'tag'}>{name[1]}</span>
-                                                <span className={`tag side-${name[2]}`}>{name[2]}</span>
-                                            </div>
-                                            <img src={`/models/${this.state['th'][ds][code]}`} />
-                                            <div className={'hints hints-bottom'}>
-                                                <button className={'button'}>Details</button>
-                                                <a target={'_blank'} href={`/api/model/mat-${name[0]}-${name[1]}-${name[2]}`} className={'button'}>{download} Matrix</a>
-                                                <a target={'_blank'} href={`/api/model/hmm-${name[0]}-${name[1]}-${name[2]}`} className={'button'}>{download} HMM</a>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            }</div>
-                        </div>
+                      <div className={'cluster-group'}>{obj.map(this.gridPlot)}</div>
                     );
                 })}
+                
                 <div className={'modal ' + (this.state['hmm'] ? 'visible' : '')}>
                     <div className={'container'}>
                         <div className={'modal-head'}>

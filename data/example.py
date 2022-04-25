@@ -15,6 +15,7 @@ names = list(map(lambda x: x[0], cur.description))
 for row in cur.fetchall():
     obj = dict(zip(names, row))
     bin = obj['coverage']
+    # Conversion of BLOB data to integer coverage values:
     obj['coverage'] = [(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)]
     print(obj)
 

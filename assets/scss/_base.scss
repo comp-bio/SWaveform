@@ -155,7 +155,11 @@ table {
 
   .group {
     margin-left: 20px;
-    margin-top: -4px;
+    //margin-top: -4px;
+
+    svg {
+      margin-right: 5px;
+    }
 
     &.tabs {
       .button {
@@ -317,6 +321,56 @@ table {
   background: rgba(0, 0, 0, 0.05);
   border-radius: 5px;
   margin-bottom: 18px;
+}
+
+.cluster-group {
+  border-left: 8px solid rgb(78, 121, 167, 0.3);
+  padding: 5px 0 15px 30px;
+  border-bottom: 1px dashed #999;
+
+  &:nth-child(odd) {
+    border-left: 8px solid rgb(237, 201, 73, 0.3);
+  }
+}
+
+.cluster {
+  h5 {
+    margin-bottom: 5px;
+    margin-top: 12px;
+
+    code {
+      font-size: 100%;
+    }
+  }
+
+  .plot-list {
+    display: flex;
+    margin-left: -23px;
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    .img {
+      width: 20%;
+      position: relative;
+
+      .button {
+        transition: opacity 0.15s ease;
+        opacity: 0;
+        position: absolute;
+        right: 10px;
+        bottom: 20px;
+      }
+
+      &:hover {
+        .button {
+          opacity: 1;
+        }
+      }
+    }
+  }
 }
 
 .error-page {

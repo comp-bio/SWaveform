@@ -26,9 +26,9 @@ hljs.registerLanguage('r', r);
 /* Code examples [HTML] */
 const examples = () => {
   return {
-    'hl.php': hljs.highlight(code_php, {language: 'php', ignoreIllegals: true }).value,
-    'hl.py': hljs.highlight(code_py, {language: 'python', ignoreIllegals: true }).value,
-    'hl.r': hljs.highlight(code_R, {language: 'r', ignoreIllegals: true }).value
+    'PHP': hljs.highlight(code_php, {language: 'php', ignoreIllegals: true }).value,
+    'Python': hljs.highlight(code_py, {language: 'python', ignoreIllegals: true }).value,
+    'R': hljs.highlight(code_R, {language: 'r', ignoreIllegals: true }).value
   };
 };
 

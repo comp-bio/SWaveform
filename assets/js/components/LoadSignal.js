@@ -31,6 +31,7 @@ class LoadSignal {
                 'start': this.parent.state.start,
                 'end': this.parent.state.end,
                 'types': this.parent.state.types,
+                'side': this.parent.state.side,
                 'dataset': this.parent.state.dataset,
                 'population': this.parent.state.population,
                 'page': this.page,

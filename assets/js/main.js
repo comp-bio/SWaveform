@@ -17,7 +17,7 @@ ReactDOM.render(
         <div className={'container'}>
             <header className={'header'}>
                 <h1 className="h1">
-                    <NavLink to={`/`}>Aberrations Coverage Repository</NavLink>
+                    <NavLink to={`/`}>SWaveform</NavLink>
                 </h1>
                 <nav className={'nav'}>
                     <NavLink className={'link'} exact activeClassName={'active'} to={`/`}>
@@ -32,7 +32,7 @@ ReactDOM.render(
                 </nav>
             </header>
         </div>
-        <section className={'container'}>
+        <section className={'container content'}>
             <Switch>
                 <Route exact path="/" component={PlotPage} />
                 <Route path="/description" component={DescriptionPage} />

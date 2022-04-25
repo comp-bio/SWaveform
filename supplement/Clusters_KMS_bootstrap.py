@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Usage: python3 Clusters_KMS_bootstrap.py src:signals.bin sax:128 alphabet:32 window:32 dataset:50 repeats:100  
+
 options = {'src': None, 'sax': 64, 'alphabet': 32, 'window': 32, 'dataset': 50, 'repeats': 1}
-seed = 1337
+seed = 1337 * 3
 
 import sys, os, base64, io, math, time
 import random, json, warnings
@@ -46,6 +47,16 @@ def make_matrix(subs, result, sax):
     return [list(i) for i in Z/len(result)]
 
 
+def results_save(subs, results):
+    mtx = []
+    for result in results[0:12]:
+        mt_one = []
+        for i in result:
+            mt_one.append([subs[i].offset, [int(v[0]) for v in subs[i].src]])
+        mtx.append(mt_one)
+    return mtx
+
+
 def find_KMS_v4(subs, seed, **kwargs):
     if not sax or not sax_motif: 
         return False
@@ -53,6 +64,9 @@ def find_KMS_v4(subs, seed, **kwargs):
     random.seed(seed)
     cnt = len(subs)
     dms = subs[0].raw.shape[0]
+
+    #ref_A = subs[random.choice(range(0, cnt))].raw
+    #ref_B = subs[random.choice(range(0, cnt))].raw
     
     ref_A, ref_B = sax_motif.fit_transform([basis(dms, math.sin), basis(dms, math.cos)])
     d2ref = np.array([[i, sax.distance_sax(obj.raw, ref_A), sax.distance_sax(obj.raw, ref_B)] for i, obj in enumerate(subs)]).reshape(cnt, 3)
@@ -94,18 +108,9 @@ def find_KMS_v4(subs, seed, **kwargs):
 
     mtf = siz[(-siz[:,0]).argsort()]
     results = [np.where(links == idx)[0] for cnt, idx in mtf]
-    return [{'m': make_matrix(subs, result, sax_motif), 'items': len(result)} for result in results[0:5]]
-
-
-def cls_plot(data, title):
-    s = io.BytesIO()
-    opacity = max(8/len(data), 0.001)
-    for sig in data:
-        plt.plot(sig, color='#000', alpha=opacity)
-    plt.title(title)
-    plt.savefig(s, format='png', bbox_inches="tight")
-    plt.close()
-    return base64.b64encode(s.getvalue()).decode("utf-8").replace("\n", "")
+    
+    return results_save(subs, results[0:12])
+    #return [{'m': make_matrix(subs, result, sax_motif), 'items': len(result)} for result in results[0:5]]
 
 
 # ---------------------------------------------------------------------------- #
@@ -140,24 +145,19 @@ for rep in range(0, options['repeats']):
         cls = TimeSeriesScalerMeanVariance().fit_transform(data[pred == cls_index])
         trsf = sax.fit_transform(cls)
         
-        # s = '({:.2f}%)'.format(100 * len(cls)/options['dataset'])
-        # image = cls_plot(cls, f"{name} • Class: {cls_index + 1} – {len(cls)} {s}")
-        # '<img src="data:image/png;base64,%s">' % image        
-
         subs = []
         for k, signal in enumerate(trsf):
             for i in range(0, len(signal) - options['window'] + 1, window_step):
                 obj = {'raw': signal[i:(i + options['window'])], 'offset': i, 'src': trsf[k]}
                 subs.append(type('new_dict', (object,), obj))
         mt = find_KMS_v4(subs, seed=seed)
-        #results.append({'cls': cls_index, 'image': image, 'elements': len(cls), 'subs': len(subs), 'motif': mt})
         results.append({
             'cls': cls_index, 
             'cls_mean': [v[0] for v in np.mean(scld[pred == cls_index], axis=0)],
             'cls_std': [v[0] for v in np.std(scld[pred == cls_index], axis=0)],
             'dataset': options['dataset'], 
             'elements': len(cls), 
-            'subs': len(subs), 
+            'subs': len(subs),
             'motif': mt
         })
 
@@ -178,5 +178,6 @@ out = f"{dir_}/motif_{name}_s{options['sax']}-{options['alphabet']}_w{options['w
 with open(out, "w") as f:
     json.dump([A, B], f)
 
-print(f"Result:   {out}")
-print(f"Time:     {int((time.time() - start_time)/60)} min.\n")
+print(f"")
+print(f"Result: {out}")
+print(f"Time:   {int((time.time() - start_time)/60)} min.\n")

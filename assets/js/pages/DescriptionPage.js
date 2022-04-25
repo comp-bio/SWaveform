@@ -2,15 +2,21 @@ import React from 'react'
 import { examples, schema, download } from '../components/helpers.js'
 
 const overview = require('../../../build/overview.json');
+const icon = (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-download" viewBox="0 0 16 16">
+    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+  </svg>
+);
+
 
 class DescriptionPage extends React.Component {
   constructor(props) {
     super(props);
     this.examples = examples();
     this.schema = schema();
-    this.state = {};
-    
-    console.log('schema', this.schema.compact);
+    this.state = {'tab': 'Python'};
+    console.log('overview', overview);
   }
   
   iter(name, ds) {
@@ -28,8 +34,7 @@ class DescriptionPage extends React.Component {
   }
   
   componentDidMount() {
-    this.setState({
-    });
+    this.setState({});
   }
   
   render() {
@@ -50,10 +55,8 @@ class DescriptionPage extends React.Component {
         <h2 className="h2">
           <span>Schema</span>
           <div className={'group'}>
-            <button className={'button'}
-                    onClick={() => { download('schema.json', this.schema.documents) }}>JSON</button>
-            <button className={'button'}
-                    onClick={() => { download('schema.sql', this.schema.sqlite, 'application/octet-stream') }}>SQLite</button>
+            <button onClick={() => { download('schema.json', this.schema.documents) }} className={'button'}>{icon} JSON</button>
+            <button onClick={() => { download('schema.sql', this.schema.sqlite, 'application/octet-stream') }} className={'button'}>{icon} SQLite</button>
           </div>
         </h2>
 
@@ -79,19 +82,15 @@ class DescriptionPage extends React.Component {
         <h2 className="h2">
           <span>Code examples</span>
           <div className={'group tabs'}>
-            <button className={'button active'}>Python</button>
-            <button className={'button'}>PHP</button>
-            <button className={'button'}>R</button>
+            {['Python', 'PHP', 'R'].map(lang => (
+              <button className={`button ${this.state['tab'] === lang ? 'active' : ''}`}
+                      onClick={() => this.setState({'tab': lang})} key={lang}>{lang}</button>
+            ))}
           </div>
-          
         </h2>
         <div className={'part'}>
-          <h4 className="h4">Python</h4>
-          <div className={'code'} dangerouslySetInnerHTML={{ __html: this.examples['hl.py'] }} />
-          <h4 className="h4">PHP</h4>
-          <div className={'code'} dangerouslySetInnerHTML={{ __html: this.examples['hl.php'] }} />
-          <h4 className="h4">R</h4>
-          <div className={'code'} dangerouslySetInnerHTML={{ __html: this.examples['hl.r'] }} />
+          <h4 className="h4">{this.state['tab']}</h4>
+          <div className={'code'} dangerouslySetInnerHTML={{ __html: this.examples[this.state['tab']] }} />
         </div>
         
         <h2 className="h2">Statistics</h2>
@@ -100,11 +99,22 @@ class DescriptionPage extends React.Component {
           <div className={'items'}><code>{overview.total.toLocaleString()}</code></div>
           <div className={'dataset-groups'}>
             {Object.keys(overview['ds']).map(ds => {
-              //let p = this.iter('populations', ds);
+              const d = overview['ds'][ds];
+              console.log(d);
               return (
                 <div className={'dataset-group'} key={ds}>
                   <h4 className={'h4'}>Dataset: <strong>{ds}</strong></h4>
-                  {this.iter('types', ds)}
+                  <table>
+                    <thead><tr><th>Population (samples)</th>{Object.keys(d.types).map(type => <th key={type}>{type}</th>)}</tr></thead>
+                    <tbody>
+                    {Object.keys(d.populations).map((p_name, r) => (
+                      <tr key={r}>
+                        <td>{p_name} ({d.populations[p_name]})</td>
+                        {Object.keys(d.types).map(type => <td key={type}>{d.types[type][p_name]}</td>)}
+                      </tr>
+                    ))}
+                    </tbody>
+                  </table>
                 </div>
               );
             })}

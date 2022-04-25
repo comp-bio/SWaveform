@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Usage: python3 server.py signal.db
 
-import os, sys
+import os, sys, re
 import json
 import glob
 import sqlite3
@@ -20,15 +20,18 @@ def model(variant, ds, type, side):
     return jsonify({})
 
 
-@app.route('/api/matrix', methods=['GET', 'POST'])
-def image():
-    data = {}
-    for src in glob.glob(f"./build/models/*.svg.th.png"):
-        name = os.path.basename(src).split('.')[1]
-        ds = name.split('-')[0]
-        if ds not in data: data[ds] = {}
-        data[ds][name] = os.path.basename(src)
-    return jsonify(data)
+@app.route('/api/overview', methods=['GET', 'POST'])
+def overview():
+    def fx(root):
+        return [os.path.basename(src) for src in sorted(glob.glob(root))]
+    return jsonify({
+        'models': fx(f"./build/models/*.svg.th.png"),
+        'meta': fx(f"./build/downloads/meta*.json")
+    })
+    #res = re.search("meta_(.+)\.([A-Za-z_]+)_s([0-9]+)-([0-9]+)_w([0-9]+)_d([0-9]+)_r([0-9]+).json", src)
+    #code, name = res.groups()[0:2]
+    #sax_w, sax_h, window, dataset, repeats = map(int, res.groups()[2:])
+    #print([code, name, sax_w, sax_h, window, dataset, repeats])
 
 
 @app.route('/api/signal', methods=['GET', 'POST'])
@@ -40,10 +43,14 @@ def signal():
     types = [t for t in e['types'] if e['types'][t]]
     sql_t = ','.join(['?'] * len(types))
 
+    side = [t for t in e['side'] if e['side'][t]]
+    sql_s = ','.join(['?'] * len(side))
+
     # datasets = [t for t in e['datasets'] if e['datasets'][t]]
     # sql_d = ','.join(['?'] * len(datasets))
     offset = int(e['page']) * 24
-    values = [e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types + [e['dataset']]
+    values = [e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types + side + [e['dataset']]
+    print(values)
 
     filter_by_population = ""
     if e['population'] != "":
@@ -52,7 +59,7 @@ def signal():
 
     cur.execute("SELECT s.id, s.start, s.end, s.type, s.side, s.coverage, t.name, t.population, t.meancov  FROM signal as s "
             "LEFT JOIN target AS t ON t.id = s.target_id "
-            f"WHERE (s.chr = ? OR s.chr = ?) AND s.start < ? AND s.end > ? AND s.type IN ({sql_t}) AND t.dataset = ? "
+            f"WHERE (s.chr = ? OR s.chr = ?) AND s.start < ? AND s.end > ? AND s.type IN ({sql_t}) AND s.side IN ({sql_s}) AND t.dataset = ? "
             f"{filter_by_population}"
             f"ORDER BY s.start LIMIT 24 OFFSET {offset}", tuple(values))
 
@@ -79,6 +86,11 @@ def root():
 @app.route('/models/<path>')
 def models(path):
     return send_from_directory('./build/models/', path)
+
+
+@app.route('/downloads/<path>')
+def downloads(path):
+    return send_from_directory('./build/downloads/', path)
 
 
 @app.route('/<path>/<any>')

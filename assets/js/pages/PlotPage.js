@@ -12,6 +12,7 @@ const karyotypes = {
 
 const types = Object.values(overview['ds']).map(v => Object.keys(v['types'])).flat();
 const type_color = d3.scaleOrdinal().domain(types).range(d3.schemeTableau10);
+const side_color = (t) => ({'L': '#F00', 'R': '#080', 'C': '#009'}[t]);
 
 let timer = null;
 
@@ -31,6 +32,7 @@ class PlotPage extends React.Component {
             'karyotype': {},
             'chr': '', 'start': 0, 'end': 1, 'offset': 0,
             'data:signal': [], 'types': {},
+            'side': {'L': true, 'R': true, 'C': true},
             'more': true,
             'windowWidth': window.innerWidth
         };
@@ -132,14 +134,14 @@ class PlotPage extends React.Component {
                 return (
                   <div className={'signal-wrapper'} key={k}>
                       <div className={'hints'}>
-              <span>
-                <span className={'circle'} style={{background: type_color(e.type)}} />
-                <span className={'tag'}>{e.type}</span>
-                <span className={`tag side-${e.side}`}>{e.side}</span>
-              </span>
                           <span>
-                <span className={'tag mini'}>{e.population || e.name}</span>
-              </span>
+                            <span className={'circle'} style={{background: type_color(e.type)}} />
+                            <span className={'tag'}>{e.type}</span>
+                            <span className={`tag side-${e.side}`}>{e.side}</span>
+                          </span>
+                          <span>
+                            <span className={'tag mini'}>{e.population || e.name}</span>
+                          </span>
                       </div>
                       <Signal obj={e} parent={this} />
                   </div>
@@ -203,6 +205,10 @@ class PlotPage extends React.Component {
                   <div className={'group filters'}>
                       <span className={'label'}>Filter by type:</span>
                       <div>{Object.keys(this.state['types']).map(name => this.checkbox(name, 'types', type_color))}</div>
+                  </div>
+                  <div className={'group filters'}>
+                      <span className={'label'}>Filter by type:</span>
+                      <div>{Object.keys(this.state['side']).map(name => this.checkbox(name, 'side', side_color))}</div>
                   </div>
               </div>
               <div className={'controls'}>
