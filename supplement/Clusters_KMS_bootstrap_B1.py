@@ -68,8 +68,8 @@ def find_KMS_v4(subs, seed, **kwargs):
     #ref_A = subs[random.choice(range(0, cnt))].raw
     #ref_B = subs[random.choice(range(0, cnt))].raw
     
-    ref_A, ref_B = sax_motif.fit_transform([basis(dms, math.sin), basis(dms, math.cos)])
-    # ref_A, ref_B = sax_motif.fit_transform([basis(dms, lambda f: -math.sin(f)), basis(dms, lambda f: -math.cos(f))])
+    # ref_A, ref_B = sax_motif.fit_transform([basis(dms, math.sin), basis(dms, math.cos)])
+    ref_A, ref_B = sax_motif.fit_transform([basis(dms, lambda f: -math.sin(f)), basis(dms, lambda f: -math.cos(f))])
     
     d2ref = np.array([[i, sax.distance_sax(obj.raw, ref_A), sax.distance_sax(obj.raw, ref_B)] for i, obj in enumerate(subs)]).reshape(cnt, 3)
 
