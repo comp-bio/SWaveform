@@ -31,6 +31,67 @@ for js in glob.glob(os.path.dirname(os.path.abspath(__file__)) + "/../data/*.jso
     karyotypes[os.path.basename(js).split('.')[0]] = json.load(kt)
 
 # --------------------------------------------------------------------------- #
+if not os.path.isdir('build/models'):
+    os.mkdir('build/models')
+
+import random, json, warnings
+import numpy as np
+import matplotlib.pyplot as plt
+
+warnings.filterwarnings("ignore")
+
+from tslearn.preprocessing import TimeSeriesScalerMeanVariance
+from tslearn.piecewise import SymbolicAggregateApproximation
+
+
+def read_coverage(f, num = 0):
+    fh = open(f, "rb")
+    fh.seek(num * 1024)
+    bin = fh.read(1024)
+    return [(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)]
+
+
+def read_random(f, count=100, seed=0):
+    random.seed(seed)
+    index_range = range(int(os.path.getsize(f)/1024))
+    return [read_coverage(f, i) for i in random.sample(index_range, min(count, len(index_range) - 1))]
+
+
+def type_plot(data, name):
+    fig, ax = plt.subplots(figsize=(6, 4))
+    opacity = max(10/len(data), 0.002)
+    for x in data:
+        opacity = 10/len(data)
+        ax.plot(x, linewidth=1, alpha=opacity, color='k')
+    ax.set_title(os.path.basename(name).replace('_filterd.bin', ''))
+    plt.savefig(f'{name}.plt.png', format='png', bbox_inches="tight")
+    plt.close()
+
+
+echo('Images: \n')
+seed = 1337
+
+sax = SymbolicAggregateApproximation(
+    n_segments=128,
+    alphabet_size_avg=32)
+
+files = {}
+cur.execute(f"SELECT s.coverage, s.size, s.type, s.side FROM signal as s")
+for sig, size, tp, side in cur.fetchall():
+    if size < 256 and side != 'C': continue
+    name = f"build/models/HGDP_{tp}_{side}_filterd.bin"
+    if name not in files: files[name] = open(name, 'wb')
+    files[name].write(sig)
+
+for name in files:
+    echo(f' > {name}\n', color='33')
+    files[name].close()
+    data = np.array(read_random(name, 5000, seed))
+    cls = TimeSeriesScalerMeanVariance().fit_transform(data)
+    trsf = sax.fit_transform(cls)
+    type_plot(trsf, name)
+
+# --------------------------------------------------------------------------- #
 ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
 info = {'total': list(ret)[0]}
 echo('Total signals: %d\n' % info['total'])
@@ -73,32 +134,5 @@ for ds in info['ds']:
 
 with open('build/overview.json', "w") as h:
         json.dump(info, h)
-
-# --------------------------------------------------------------------------- #
-if not os.path.isdir('build/models'):
-    os.mkdir('build/models')
-
-echo('Models: \n')
-for ds in info['ds']:
-    for side in ['L', 'R', 'C']:
-        for type in info['ds'][ds]['types']:
-            matrix, hmm, mean_hist, total = models(cur, type, side, ds)
-            echo(' > %s - %s [%s] (total:%d)\n' % (ds, type, side, total), color='33')
-            if total < 32:
-                continue
-            hmm_plot(hmm, matrix, 'build/models/plot.%s-%s-%s.svg' % (ds, type, side))
-
-            with open('build/models/heatmap.%s-%s-%s.tsv' % (ds, type, side), "w") as h:
-                write_matrix(matrix, h)
-
-            with open('build/models/hist.%s-%s-%s.tsv' % (ds, type, side), "w") as h:
-                h.write("\n".join([("%.5f" % v) for v in mean_hist]))
-
-            with open('build/models/hmm.%s-%s-%s.tsv' % (ds, type, side), "w") as h:
-                for matrix in hmm:
-                    write_matrix(matrix, h, "\n")
-
-            with open('build/models/hmm.%s-%s-%s.json' % (ds, type, side), "w") as h:
-                json.dump(hmm, h)
 
 echo('Done\n')

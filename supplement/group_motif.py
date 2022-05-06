@@ -36,8 +36,12 @@ def motif_dist(M1, M2, limit=80):
 
 
 def get_groups(C):
-    groups = C[0]['motif']
-    for run in C[1:]:
+    groups = None
+    for run in C:
+        if len(run['motif']) == 0: continue
+        if groups == None:
+            groups = run['motif']
+            continue
         for M in run['motif']:
             dists = [motif_dist(G, M) for G in groups]
             k_min = np.argmin(dists)

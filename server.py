@@ -25,7 +25,7 @@ def overview():
     def fx(root):
         return [os.path.basename(src) for src in sorted(glob.glob(root))]
     return jsonify({
-        'models': fx(f"./build/models/*.svg.th.png"),
+        'models': fx(f"./build/models/*.png"),
         'meta': fx(f"./build/downloads/meta*.json")
     })
     #res = re.search("meta_(.+)\.([A-Za-z_]+)_s([0-9]+)-([0-9]+)_w([0-9]+)_d([0-9]+)_r([0-9]+).json", src)
@@ -50,7 +50,6 @@ def signal():
     # sql_d = ','.join(['?'] * len(datasets))
     offset = int(e['page']) * 24
     values = [e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types + side + [e['dataset']]
-    print(values)
 
     filter_by_population = ""
     if e['population'] != "":

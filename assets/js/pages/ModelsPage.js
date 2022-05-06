@@ -17,7 +17,6 @@ class ModelsPage extends React.Component {
     componentDidMount() {
         axios({url: `/api/overview`, method: 'get'}).then((res) => {
             this.setState(res.data);
-            // res.data.models
             res.data.meta.map(src => {
                 axios({url: `/downloads/${src}`, method: 'get'}).then((res) => {
                     this.setState({[`src:${src}`]: res.data})
@@ -40,7 +39,6 @@ class ModelsPage extends React.Component {
                     </div>
                   ))}
               </div>
-              
           </article>
         );
     }
@@ -50,44 +48,28 @@ class ModelsPage extends React.Component {
             <>
                 <div className={'part'}>
                     <p className="lead">
-                        All signals are compressed to a 64x32 matrix. All matrices for all signals are summed and normalized.
-                        The intensity of the blue squares shows the number of signal values for a given point (Matrix.json).
-                    </p>
-                    <p className="lead">
-                        Markov models (HMM.json) were built for all signals of each type as follows:
-                        For each value of the coverage signal at position <code>i</code>, the probabilities of transition to all possible values of position <code>i + 1</code> are calculated.
-                        The probabilities are highlighted on the chart with lines. Line intensity is close to 1.
+                      The graphs show all signals of each type, overlapping each other.
+                      SAX-transformation is used with a width of 128 and the size of the alphabet 32
                     </p>
                 </div>
 
                 <h2 className="h2">SV overview</h2>
                 <div className={'model-items'}>
-                    {this.state.models.map(src => {
-                        const code = src.replace('.svg.th.png', '').replace('plot.', '');
-                        const tag = code.substr(0, code.length - 2);
-                        const side = code.substr(-1);
-                        
-                        return (
-                          <div className={'model-item'} onClick={() => this.setState({
-                              'hmm': src.replace('.th.', '.'),
-                              'title': code
-                          })} key={src}>
-                              <div className={'hints'}>
-                                  <span className={'tag'}>{tag}</span>
-                                  <span className={`tag side-${side}`}>{side}</span>
-                              </div>
-                              <img src={`/models/${src}`} />
-                              <div className={'hints hints-bottom'}>
-                                  <button className={'button'}>Details</button>
-                                  <a target={'_blank'} href={`/api/model/mat`} className={'button'}>{icon} Matrix</a>
-                                  <a target={'_blank'} href={`/api/model/hmm`} className={'button'}>{icon} HMM</a>
-                              </div>
-                          </div>
-                        );
-                    })}
+                    {this.state.models.map(src => <div className={'model-item'} key={src}><img src={`/models/${src}`} /></div>)}
                 </div>
     
                 <h2 className="h2">Found motifs</h2>
+                <div className={'part'}>
+                  <p className="lead">
+                    1 column:<br/>
+                    For all signals from the cluster, the average value (blue line) and the standard deviation (gray strip) are shown.
+                    All runs (all clusters) are superimposed on each other. Standard normalization is applied.
+                  </p>
+                  <p className="lead">
+                    2-5 columns:<br/>
+                    4 of the most significant motives. Gray lines show a signal from which the motive is extracted, the motive itself is highlighted by orange. SAX-transformation is applied).
+                  </p>
+                </div>
                 {this.state.meta.map(src => {
                     const obj = this.state[`src:${src}`] || null;
                     if (!obj) return <div key={src} className={'meta-item'}>{src}</div>;

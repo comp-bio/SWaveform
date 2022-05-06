@@ -2,6 +2,7 @@ import React from "react";
 import KaryotypeBar from "../components/KaryotypeBar";
 import Signal from "../components/Signal";
 import LoadSignal from "../components/LoadSignal";
+import example_signal from "../components/annotation.signal";
 
 const d3 = require('d3')
 const overview = require('../../../build/overview.json')
@@ -140,7 +141,7 @@ class PlotPage extends React.Component {
                             <span className={`tag side-${e.side}`}>{e.side}</span>
                           </span>
                           <span>
-                            <span className={'tag mini'}>{e.population || e.name}</span>
+                            <span className={'tag mini'}>{e.name}</span>
                           </span>
                       </div>
                       <Signal obj={e} parent={this} />
@@ -230,6 +231,36 @@ class PlotPage extends React.Component {
                   </div>
               </div>
               <div className={'karyotype-box'} id={"gmap"} />
+              
+              <div className={'annotation'}>
+                  <div className={'item'}>
+                      <span className={'a-box'}><i className={'vl'}></i></span> Aberratration point (middle of the signal)
+                  </div>
+                  
+                  <div className={'item'}>
+                      <span className={'a-box'}><i className={'hl'}></i></span> The average depth of the genome coverage for the sample
+                  </div>
+                  
+                  <div className={'item'}>
+                      <span className={'a-box'}>
+                          {example_signal}
+                      </span> Coverage signal depth graph
+                  </div>
+    
+                  <div className={'item'}>
+                      <span className={'a-box t'}>
+                          <span className={'tag side-C'}>C</span>
+                          <span className={'tag side-L'}>L</span>
+                          <span className={'tag side-R'}>R</span>
+                      </span>
+                      Indicator of the side of the breakpoint. L – beginning (left); R – ending (right); C – center (for aberrations less than 32bp)
+                  </div>
+    
+                  <div className={'item'}>
+                      <span className={'a-box'}><span className={'tag'}>ERS1063416</span></span> The sample code from which the signal was extracted
+                  </div>
+                  
+              </div>
               <div className={'signals'}>{this.renderResult()}</div>
           </div>
         )

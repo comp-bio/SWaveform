@@ -80,7 +80,10 @@ for chr, L, R, sv_type, rec in reader.info():
 
         if sv_type == 'CNV':
             if 'data' in sample.__dir__() and 'CNF' in sample.data.__dir__():
-                sv_type = 'CNV_gain' if sample.data.CNF > 1 else 'CNV_loss'
+                # sv_type = 'CNV_gain' if sample.data.CNF > 1 else 'CNV_loss'
+                if sample.data.CNF > 1.5: sv_type = 'CNV_gain'
+                if sample.data.CNF < 1.0: sv_type = 'CNV_loss'
+                if sv_type == 'CNV': continue
 
         if sv_type == 'INS':
             L = R
