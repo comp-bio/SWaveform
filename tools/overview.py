@@ -6,6 +6,7 @@ from _functions import *
 from _model import *
 from _hmm_plot import *
 
+max_hist = 500
 
 con = False
 if len(sys.argv) > 1:
@@ -68,6 +69,84 @@ def type_plot(data, name):
     plt.close()
 
 
+def empty_hist(size = 500):
+    return [0 for i in range(size + 1)]
+
+# --------------------------------------------------------------------------- #
+
+ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
+info = {'total': list(ret)[0]}
+echo('Total signals: %d\n' % info['total'])
+
+cur.execute("SELECT COUNT(*), dataset, genome_version FROM target GROUP BY dataset")
+info['ds'] = {}
+echo('Datasets: \n')
+for cnt, ds, genome_version in cur.fetchall():
+    info['ds'][ds] = {'genome': genome_version}
+    echo(' > %s - files: %d\n' % (ds, cnt), color='33')
+
+for ds in info['ds']:
+    echo('Dataset: %s\n' % ds)
+
+    cur.execute(f"SELECT COUNT(*), population FROM target WHERE dataset = '{ds}' GROUP BY population")
+    info['ds'][ds]['populations'] = {population:cnt for cnt, population in cur.fetchall()}
+    echo(' > Populations: %d\n' % len(info['ds'][ds]['populations']), color='33')
+
+    cur.execute(f"SELECT COUNT(signal.id), signal.type, target.population FROM signal "
+                f"LEFT JOIN target ON target.id = signal.target_id "
+                f"WHERE target.dataset = '{ds}' GROUP BY signal.type, target.population")
+
+    info['ds'][ds]['types'] = {}
+    for cnt, tp, population in cur.fetchall():
+        if tp not in info['ds'][ds]['types']: info['ds'][ds]['types'][tp] = {}
+        info['ds'][ds]['types'][tp][population] = cnt
+    echo(' > Types: %d\n' % len(info['ds'][ds]['types']), color='33')
+
+    # Histogram
+    stat = {}
+    for population in info['ds'][ds]['populations']:
+        echo(f' – {population} – ', color='33')
+        stat[population] = {}
+        for tp in info['ds'][ds]['types']:
+            echo(f'{tp} ', color='33')
+            stat[population][tp] = {}
+            cur.execute(f"SELECT s.side, s.coverage FROM signal as s "
+                        f"LEFT JOIN target as t ON t.id = s.target_id "
+                        f"WHERE t.dataset = '{ds}' and t.population = '{population}' and s.type = '{tp}'")
+            for side, bin in cur.fetchall():
+                if side not in stat[population][tp]:
+                    stat[population][tp][side] = {'hist': empty_hist(max_hist), 'count': 0, 'mean': 0}
+                coverage = [(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)]
+                stat[population][tp][side]['count'] += 1
+                for v in coverage:
+                    stat[population][tp][side]['hist'][min(v, max_hist)] += 1
+                    stat[population][tp][side]['mean'] += v/len(coverage)
+        echo('\n')
+
+    for population in stat:
+        for tp in stat[population]:
+            for side in stat[population][tp]:
+                stat[population][tp][side]['mean'] /= stat[population][tp][side]['count']
+
+    info['ds'][ds]['stat'] = stat
+
+    info['ds'][ds]['density'] = {}
+    chrom = karyotypes[ info['ds'][ds]['genome'] ]
+    for chr in chrom:
+        chr_len = chrom[chr][-1][1]
+        step = round(chr_len/(1000-1))
+        cur.execute(f"SELECT COUNT(*), cast((`start`+256)/{step} as int) AS ro FROM signal "
+                    f"LEFT JOIN target ON target.id = signal.target_id "
+                    f"WHERE (signal.chr = '{chr}' or signal.chr = 'chr{chr}') and target.dataset = '{ds}' GROUP BY ro")
+        density = {int(pos):cnt for cnt, pos in cur.fetchall()}
+        all = [(0 if i not in density else density[i]) for i in range(0, 1000)]
+        c = chr.replace('chr','')
+        info['ds'][ds]['density'][c] = {'l': all, 'step': step}
+
+with open('build/overview.json', "w") as h:
+        json.dump(info, h)
+
+# --------------------------------------------------------------------------- #
 echo('Images: \n')
 seed = 1337
 
@@ -91,48 +170,5 @@ for name in files:
     trsf = sax.fit_transform(cls)
     type_plot(trsf, name)
 
-# --------------------------------------------------------------------------- #
-ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
-info = {'total': list(ret)[0]}
-echo('Total signals: %d\n' % info['total'])
-
-cur.execute("SELECT COUNT(*), dataset, genome_version FROM target GROUP BY dataset")
-info['ds'] = {}
-echo('Datasets: \n')
-for cnt, ds, genome_version in cur.fetchall():
-    info['ds'][ds] = {'genome': genome_version}
-    echo(' > %s - files: %d\n' % (ds, cnt), color='33')
-
-for ds in info['ds']:
-    echo('Dataset: %s\n' % ds)
-
-    cur.execute(f"SELECT COUNT(*), population FROM target WHERE dataset = '{ds}' GROUP BY population")
-    info['ds'][ds]['populations'] = {population:cnt for cnt, population in cur.fetchall()}
-    echo(' > Populations: %d\n' % len(info['ds'][ds]['populations']), color='33')
-
-    cur.execute(f"SELECT COUNT(signal.id), signal.type, target.population FROM signal "
-                f"LEFT JOIN target ON target.id = signal.target_id "
-                f"WHERE target.dataset = '{ds}' GROUP BY signal.type, target.population")
-    info['ds'][ds]['types'] = {}
-    for cnt, tp, population in cur.fetchall():
-        if tp not in info['ds'][ds]['types']: info['ds'][ds]['types'][tp] = {}
-        info['ds'][ds]['types'][tp][population] = cnt
-    echo(' > Types: %d\n' % len(info['ds'][ds]['types']), color='33')
-
-    info['ds'][ds]['density'] = {}
-    chrom = karyotypes[ info['ds'][ds]['genome'] ]
-    for chr in chrom:
-        chr_len = chrom[chr][-1][1]
-        step = round(chr_len/(1000-1))
-        cur.execute(f"SELECT COUNT(*), cast((`start`+256)/{step} as int) AS ro FROM signal "
-                    f"LEFT JOIN target ON target.id = signal.target_id "
-                    f"WHERE (signal.chr = '{chr}' or signal.chr = 'chr{chr}') and target.dataset = '{ds}' GROUP BY ro")
-        density = {int(pos):cnt for cnt, pos in cur.fetchall()}
-        all = [(0 if i not in density else density[i]) for i in range(0, 1000)]
-        c = chr.replace('chr','')
-        info['ds'][ds]['density'][c] = {'l': all, 'step': step}
-
-with open('build/overview.json', "w") as h:
-        json.dump(info, h)
 
 echo('Done\n')

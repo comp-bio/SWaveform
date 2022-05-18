@@ -227,6 +227,60 @@
   }
 }
 
+.histogram-wrapper {
+  margin: -3px -5px;
+  position: relative;
+
+  .helper {
+    font-size: 11px;
+    text-align: center;
+  }
+
+  .col {
+    margin: 0;
+    padding: 0 2px;
+    background: #eee;
+    font-size: 11px;
+    display: flex;
+
+    &.head {
+      margin-bottom: 2px;
+      font-size: 12px;
+    }
+
+    &.footer {
+      margin-top: 2px;
+      font-size: 12px;
+    }
+
+    span {
+      flex: 1 1 33.33%;
+
+      &.side-R { color: #080; }
+      &.side-L { color: #f00; }
+      &.side-C { color: #009; }
+
+      &.w66 {
+        flex: 1 1 66.66%;
+      }
+    }
+  }
+}
+
+.hist-plot-svg {
+  margin: 4px 4px 24px 4px;
+  overflow: visible;
+  position: relative;
+  display: block;
+  //background: rgba(#e9bb66, 0.08);
+
+  .coverage {
+    &.side-R { fill: rgba(#080, 0.2); stroke: #080; }
+    &.side-L { fill: rgba(#f00, 0.2); stroke: #f00; }
+    &.side-C { fill: rgba(#009, 0.2); stroke: #009; }
+  }
+}
+
 .signal-plot-svg {
   overflow: visible;
   position: relative;

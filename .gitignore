@@ -10,5 +10,4 @@ upload.sh
 __pycache__
 .ipynb_checkpoints
 drafts
-
-
+*.zip

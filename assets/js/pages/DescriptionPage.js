@@ -1,5 +1,7 @@
 import React from 'react'
 import { examples, schema, download } from '../components/helpers.js'
+import Histogram from "../components/Histogram";
+import Signal from "../components/Signal";
 
 const overview = require('../../../build/overview.json');
 const icon = (
@@ -100,17 +102,37 @@ class DescriptionPage extends React.Component {
           <div className={'dataset-groups'}>
             {Object.keys(overview['ds']).map(ds => {
               const d = overview['ds'][ds];
-              console.log(d);
               return (
                 <div className={'dataset-group'} key={ds}>
                   <h4 className={'h4'}>Dataset: <strong>{ds}</strong></h4>
+
                   <table>
                     <thead><tr><th>Population (samples)</th>{Object.keys(d.types).map(type => <th key={type}>{type}</th>)}</tr></thead>
                     <tbody>
                     {Object.keys(d.populations).map((p_name, r) => (
                       <tr key={r}>
                         <td>{p_name} ({d.populations[p_name]})</td>
-                        {Object.keys(d.types).map(type => <td key={type}>{d.types[type][p_name]}</td>)}
+                        {Object.keys(d.types).map(type => {
+                          const stat = d.stat[p_name][type];
+                          return (
+                            <td className={'data'} key={type}>
+                              <div className={'histogram-wrapper'}>
+                                <p className={'helper'}>Coverage histogram:</p>
+                                <Histogram obj={stat} />
+                                <div className={'col head'}><span>Side</span><span>Mean</span><span>Count</span></div>
+                                {Object.keys(stat).map(side => (
+                                  <div className={'col'} key={side}>
+                                    <span className={`side-${side}`}><b>{side}</b></span>
+                                    <span>{stat[side].mean.toFixed(2)}</span>
+                                    <span>{stat[side].count}</span>
+                                  </div>
+                                ))}
+                                <div className={'col footer'}><span className={'w66'}>Total</span><span>{d.types[type][p_name]}</span></div>
+                              </div>
+                            </td>
+                          );
+                        })}
+                        
                       </tr>
                     ))}
                     </tbody>

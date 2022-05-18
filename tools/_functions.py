@@ -3,6 +3,7 @@ import sys
 
 def echo(text, color='37'):
     sys.stdout.write("\033[1;%sm%s\033[m" % (color, text))
+    sys.stdout.flush()
 
 
 def get_lines(path):

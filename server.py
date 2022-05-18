@@ -76,7 +76,7 @@ def signal():
 # --------------------------------------------------------------------------- #
 # Application page
 @app.route('/')
-@app.route('/plot')
+@app.route('/description')
 @app.route('/models')
 def root():
     return app.send_static_file('index.html')
