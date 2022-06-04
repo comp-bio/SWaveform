@@ -216,6 +216,13 @@
       margin-right: -1px;
     }
 
+    .sax-plot {
+      line {
+        stroke-width: 1px;
+        stroke: rgb(14, 27, 238);
+      }
+    }
+
     .mean-line {
       stroke-width: 1px;
       stroke: #02f;
@@ -324,7 +331,19 @@
     justify-content: center;
     box-sizing: border-box;
     overflow: hidden;
+    flex: 0 0 auto;
     position: relative;
+
+    .sax-ex {
+      width: 4px;
+      height: 1px;
+      background: #0e1bee;
+      &:nth-child(1) { transform: translateY(-4px); width: 3px }
+      &:nth-child(2) { transform: translateY(-2px) }
+      &:nth-child(3) { transform: translateY(3px) }
+      &:nth-child(4) { transform: translateY(1px) }
+      &:nth-child(5) { transform: translateY(-4px); width: 3px }
+    }
 
     &.t {
       border: none;

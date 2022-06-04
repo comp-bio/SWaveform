@@ -1,14 +1,22 @@
 # -*- coding: utf-8 -*-
 # Usage: python3 server.py signal.db
 
-import os, sys, re
-import json
-import glob
-import sqlite3
+import os, sys, re, json, glob, sqlite3, warnings
 from flask import jsonify, request, Flask, send_file, send_from_directory
 from gevent.pywsgi import WSGIServer
 
+warnings.filterwarnings("ignore")
+
+from tslearn.piecewise import SymbolicAggregateApproximation
+from tslearn.preprocessing import TimeSeriesScalerMeanVariance
+
+
+options = {'sax': 64, 'alphabet': 32, 'port': 9915}
 app = Flask(__name__, static_url_path='', static_folder='build')
+sax = SymbolicAggregateApproximation(
+    n_segments=options['sax'],
+    alphabet_size_avg=options['alphabet'])
+
 
 
 # --------------------------------------------------------------------------- #
@@ -26,7 +34,7 @@ def overview():
         return [os.path.basename(src) for src in sorted(glob.glob(root))]
     return jsonify({
         'models': fx(f"./build/models/*.png"),
-        'meta': fx(f"./build/downloads/meta*.json")
+        'meta': fx(f"./build/models/meta*.json")
     })
     #res = re.search("meta_(.+)\.([A-Za-z_]+)_s([0-9]+)-([0-9]+)_w([0-9]+)_d([0-9]+)_r([0-9]+).json", src)
     #code, name = res.groups()[0:2]
@@ -68,6 +76,8 @@ def signal():
         item = dict(zip(header, row))
         bin = item['coverage']
         item['coverage'] = [(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)]
+        cls = TimeSeriesScalerMeanVariance().fit_transform([item['coverage']])
+        item['sax'] = [int(v[0]) for v in sax.fit_transform(cls)[0]]
         result.append(item)
 
     return jsonify(result)
@@ -87,11 +97,6 @@ def models(path):
     return send_from_directory('./build/models/', path)
 
 
-@app.route('/downloads/<path>')
-def downloads(path):
-    return send_from_directory('./build/downloads/', path)
-
-
 @app.route('/<path>/<any>')
 def all(path, any):
     return root()
@@ -99,6 +104,8 @@ def all(path, any):
 
 if __name__ == "__main__":
     port = 9915
+    if len(sys.argv) > 3:
+        port = int(sys.argv[3])
     if len(sys.argv) > 2 and sys.argv[2] == "DEV":
         app.run(debug=True, host='127.0.0.1', port=port)
     else:

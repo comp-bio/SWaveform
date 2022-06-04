@@ -2,7 +2,7 @@
 # Usage: python3 Clusters_KMS_bootstrap.py src:signals.bin sax:128 alphabet:32 window:32 dataset:50 repeats:100  
 
 options = {'src': None, 'sax': 64, 'alphabet': 32, 'window': 32, 'dataset': 50, 'repeats': 1}
-seed = 1337 * 3
+seed = 1337 * 99
 
 import sys, os, base64, io, math, time
 import random, json, warnings

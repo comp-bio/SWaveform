@@ -26,14 +26,16 @@ if len(sys.argv) > 2:
     cur.execute("DELETE FROM signal WHERE coverage = ''")
     con.commit()
 
+root = os.path.dirname(os.path.abspath(__file__)) + "/../"
 karyotypes = {}
-for js in glob.glob(os.path.dirname(os.path.abspath(__file__)) + "/../data/*.json"):
+for js in glob.glob(root + "data/*.json"):
     kt = open(js, 'r')
     karyotypes[os.path.basename(js).split('.')[0]] = json.load(kt)
 
 # --------------------------------------------------------------------------- #
-if not os.path.isdir('build/models'):
-    os.mkdir('build/models')
+for cdr in ['build', 'build/models']:
+    if not os.path.isdir(root + cdr): os.mkdir(root + cdr)
+
 
 import random, json, warnings
 import numpy as np
@@ -71,6 +73,30 @@ def type_plot(data, name):
 
 def empty_hist(size = 500):
     return [0 for i in range(size + 1)]
+
+# --------------------------------------------------------------------------- #
+echo('Images: \n')
+seed = 1337
+
+sax = SymbolicAggregateApproximation(
+    n_segments=128,
+    alphabet_size_avg=32)
+
+files = {}
+cur.execute(f"SELECT s.coverage, s.size, s.type, s.side FROM signal as s")
+for sig, size, tp, side in cur.fetchall():
+    if size < 256 and side != 'C': continue
+    name = f"{root}build/models/{tp}_{side}_filterd.bin"
+    if name not in files: files[name] = open(name, 'wb')
+    files[name].write(sig)
+
+for name in files:
+    echo(f' > {name}\n', color='33')
+    files[name].close()
+    data = np.array(read_random(name, 5000, seed))
+    cls = TimeSeriesScalerMeanVariance().fit_transform(data)
+    trsf = sax.fit_transform(cls)
+    type_plot(trsf, name)
 
 # --------------------------------------------------------------------------- #
 
@@ -143,32 +169,8 @@ for ds in info['ds']:
         c = chr.replace('chr','')
         info['ds'][ds]['density'][c] = {'l': all, 'step': step}
 
-with open('build/overview.json', "w") as h:
+with open(root + 'build/overview.json', "w") as h:
         json.dump(info, h)
-
-# --------------------------------------------------------------------------- #
-echo('Images: \n')
-seed = 1337
-
-sax = SymbolicAggregateApproximation(
-    n_segments=128,
-    alphabet_size_avg=32)
-
-files = {}
-cur.execute(f"SELECT s.coverage, s.size, s.type, s.side FROM signal as s")
-for sig, size, tp, side in cur.fetchall():
-    if size < 256 and side != 'C': continue
-    name = f"build/models/HGDP_{tp}_{side}_filterd.bin"
-    if name not in files: files[name] = open(name, 'wb')
-    files[name].write(sig)
-
-for name in files:
-    echo(f' > {name}\n', color='33')
-    files[name].close()
-    data = np.array(read_random(name, 5000, seed))
-    cls = TimeSeriesScalerMeanVariance().fit_transform(data)
-    trsf = sax.fit_transform(cls)
-    type_plot(trsf, name)
 
 
 echo('Done\n')
