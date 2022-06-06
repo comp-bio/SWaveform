@@ -8,7 +8,7 @@ python3 ./overview.py $DATABASE F
 
 echo "-- KMS bootstrap --"
 for src in ../build/models/*.bin; do
-  python3 ./Clusters_KMS_bootstrap.py src:$src dataset:$DATASET repeats:$REPEATS &
+  python3 ./Clusters_ADAKMS_bootstrap.py src:$src dataset:$DATASET repeats:$REPEATS &
 done
 wait
 

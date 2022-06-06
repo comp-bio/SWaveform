@@ -61,37 +61,34 @@ sax_motif = SymbolicAggregateApproximation(
 INF = 999999
 
 def saxdist(idx, idy):
-    d_key = f'{min(idx,idy)}:{max(idx,idy)}'
+    d_key = f'{min(idx, idy)}:{max(idx, idy)}'
     if d_key not in CACHE:
         CACHE[d_key] = sax.distance_sax(subs[idx].raw, subs[idy].raw)
     return CACHE[d_key]
 
 
 def clusters_dist(C1, C2):
-    sm = INF
-    for ixd in C1:
-        for ixy in C2:
-            sm = min(sm, saxdist(idx, idy))
-    return sm
+    return np.mean(
+      [[saxdist(idx, idy) for idy in C2] for idx in C1]
+    )
+
 
 def diam(C):
-    mx = 0
-    for a in range(0, len(C) - 1):
-        for b in range(a, len(C)):
-            mx = max(mx, saxdist(C[a], C[b]))
-    return mx
+    return np.mean(
+      [[saxdist(C[a], C[b]) for b in range(a, len(C))] for a in range(0, len(C) - 1)]
+    )
 
 
 def dunn(results):
     if len(results) < 2:
         return [-1, 0, 0]
     total_items = sum([len(C) for C in results])
-    D = np.mean([diam(C) for C in results])
-    if D == 0: 
+    D = np.max([diam(C) for C in results])
+    if D == 0:
         return [INF, total_items, len(results[0])]
     min_dist = INF
     for i in range(0, len(results) - 1):
-        for j in range(i, len(results)):
+        for j in range(i + 1, len(results)):
             min_dist = min(min_dist, clusters_dist(results[i], results[j]))
     return [min_dist/D, total_items, len(results[0])]
 
@@ -117,19 +114,16 @@ for r in range(0, options['repeats']):
         for i in range(0, len(signal) - options['window'] + 1, window_step):
             obj = {'raw': signal[i:(i + options['window'])], 'offset': i, 'src': trsf[k]}
             subs.append(type('new_dict', (object,), obj))
-    
     cnt = len(subs)
     dms = subs[0].raw.shape[0]
-    
     ref_A, ref_B = sax_motif.fit_transform([basis(dms, math.sin), basis(dms, math.cos)])
     d2ref = np.array([[i, sax.distance_sax(obj.raw, ref_A), sax.distance_sax(obj.raw, ref_B)] for i, obj in enumerate(subs)]).reshape(cnt, 3)
     argss = d2ref[:, 1].argsort()
-    
     threshold = 0.0
     min_index_dist = 4
     info = []
 
-    for threshold in np.arange(0.2, 8, 0.2):
+    for threshold in [6,7,8,9,10,11,12,13]:
         sys.stdout.write('\033[1;%sm%s\033[m' % (33, f'R {r+1}/{options["repeats"]}  T {threshold:.2f}/{8}\r'))
         sys.stdout.flush()
         links = np.array([-1 for i in range(cnt)])
@@ -141,9 +135,9 @@ for r in range(0, options['repeats']):
                 if abs(A[2] - B[2]) > 2 * threshold: break
                 dst = saxdist(idx, idy)
                 if dst > threshold: continue
-                
                 parent = max(links[idx], links[idy])
-                if parent == -1: 
+
+                if parent == -1:
                     parent = max(idx, idy)
                 for cng in [idx, idy]:
                     if links[cng] == -1:
@@ -154,7 +148,7 @@ for r in range(0, options['repeats']):
         for idx in links[links != -1]:
             if idx not in motif: motif[idx] = 0
             motif[idx] += 1
-        
+
         siz = np.array([[motif[v], v] for v in motif])
         results = []
         if len(siz) > 0:
@@ -162,12 +156,12 @@ for r in range(0, options['repeats']):
             results = [np.where(links == idx)[0] for cnt, idx in mtf]
 
         info.append({
-            'threshold': threshold, 
+            'threshold': threshold,
             'dunn': dunn(results),
             'm': [make_matrix(subs, result, sax_motif) for result in results[0:5]]
         })
         # objx = results_save(subs, results[0:12])
-    repeats.append(info)    
+    repeats.append(info)
 
 # ---------------------------------------------------------------------------- #
 sys.stdout.write('\033[1;%sm%s\033[m' % (33, 'Histogram...' + (' ' * 20) + '\r'))
@@ -175,16 +169,16 @@ sys.stdout.flush()
 step_d = 0.2
 max_d  = 20
 histogram = [0 for i in range(0, int(max_d/step_d + 1))]
-for k in CACHE: 
+for k in CACHE:
     histogram[int(min(max_d, CACHE[k])/step_d)] += 1
 
 
 # ---------------------------------------------------------------------------- #
 dir_ = os.path.dirname(os.path.realpath(options['src']))
 name = os.path.basename(options['src']).replace('_filterd.bin', '')
-out = f"{dir_}/ADA_TR_{name}.d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json".replace('_filterd.bin', '')
+out = f"{dir_}/ADA_TRM_{name}.d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json".replace('_filterd.bin', '')
 with open(out, 'w') as f:
-    json.dump(repeats, f)
+    json.dump({'repeats': repeats, 'histogram': histogram}, f)
 
 print('-' * 80)
 print(f'Result: {out}')
