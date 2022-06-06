@@ -25,6 +25,7 @@ class Signal extends React.Component {
     let cov = this.obj.coverage;
     let x = d3.scaleLinear().range([0, this.width]).domain([this.obj.start, this.obj.end]);
     let y = d3.scaleLinear().range([100, 0]).domain([0, d3.max([...cov, this.obj.meancov]) + 5]);
+    let ySAX = d3.scaleLinear().range([100, 0]).domain([0, 32]);
 
     // Density
     let line = d3.line().x(d => x(d.x)).y(d => y(d.y));
@@ -32,7 +33,13 @@ class Signal extends React.Component {
       .datum([])
       .attr('class', 'coverage')
       .attr('d', line);
-
+  
+    let lineSAX = d3.line().x(d => x(d.x * 512/64)).y(d => y(d.y));
+    let density_line_SAX = svg.append('path')
+      .datum([])
+      .attr('class', 'coverage-sax')
+      .attr('d', lineSAX);
+  
     const m = y(this.obj.meancov);
     svg.append('line')
       .attr('class', 'mean-line')
@@ -43,6 +50,10 @@ class Signal extends React.Component {
 
     let aX = d3.axisBottom(x).ticks(3);
     let aY = d3.axisLeft(y).ticks(6);
+  
+    let SAX_cnt = svg.append('g')
+      .attr('class', 'sax-plot')
+      .attr('transform', `translate(0, 0)`);
 
     svg.append('g')
       .attr('class', 'axis axis--x')
@@ -54,10 +65,25 @@ class Signal extends React.Component {
       .attr('transform', `translate(${this.width}, 0)`)
       .call(aY);
 
+    // let v = [];
+    // let vSAX = [];
+
     let v = cov.map((v, i) => ({x: i + this.obj.start, y: v}));
     v.unshift({x: this.obj.start, y: 0});
     v.push({x: this.obj.start + cov.length - 1, y: 0});
     density_line.datum(v).attr('d', line);
+  
+    this.obj.sax.map((v, i) => {
+      SAX_cnt.append('line')
+        .attr('x1', x(this.obj.start + i * 512/64))
+        .attr('x2', x(this.obj.start + (i+1) * 512/64))
+        .attr('y1', ySAX(v))
+        .attr('y2', ySAX(v))
+    })
+    // this.obj.sax
+    //this.obj.sax
+    let vSAX = cov.map((v, i) => ({x: i + this.obj.start, y: v}));
+    density_line_SAX.datum(vSAX).attr('d', lineSAX);
   }
 
   render() {

@@ -132,6 +132,7 @@ class PlotPage extends React.Component {
         let items = [];
         if (this.state['data:signal'].length) {
             items = this.state['data:signal'].map((e, k) => {
+                const short_name = e.name.split('/').pop();
                 return (
                   <div className={'signal-wrapper'} key={k}>
                       <div className={'hints'}>
@@ -141,7 +142,7 @@ class PlotPage extends React.Component {
                             <span className={`tag side-${e.side}`}>{e.side}</span>
                           </span>
                           <span>
-                            <span className={'tag mini'}>{e.name}</span>
+                            <span className={'tag mini'}>{short_name}</span>
                           </span>
                       </div>
                       <Signal obj={e} parent={this} />
@@ -247,6 +248,12 @@ class PlotPage extends React.Component {
                       </span> Coverage signal depth graph
                   </div>
     
+                  <div className={'item'}>
+                      <span className={'a-box'}>
+                          {[...Array(5)].map((e, i) => <span className={'sax-ex'} key={i} />)}
+                      </span> Coverage signal, using SAX transformation (segments=64, alphabet=32)
+                  </div>
+                  
                   <div className={'item'}>
                       <span className={'a-box t'}>
                           <span className={'tag side-C'}>C</span>

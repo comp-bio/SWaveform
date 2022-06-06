@@ -18,7 +18,7 @@ class ModelsPage extends React.Component {
         axios({url: `/api/overview`, method: 'get'}).then((res) => {
             this.setState(res.data);
             res.data.meta.map(src => {
-                axios({url: `/downloads/${src}`, method: 'get'}).then((res) => {
+                axios({url: `/models/${src}`, method: 'get'}).then((res) => {
                     this.setState({[`src:${src}`]: res.data})
                 });
             });
@@ -35,7 +35,7 @@ class ModelsPage extends React.Component {
                   {C.motif.map(m => (
                     <div key={m.file} className={'img'}>
                         <img src={`data:image/png;base64,${m.plot}`} alt={'Motif'} />
-                        <a target={'_blank'} href={`/downloads/${m.file}`} className={'button'}>{icon} Download</a>
+                        <a target={'_blank'} href={`/models/${m.file}`} className={'button'}>{icon} Download</a>
                     </div>
                   ))}
               </div>
