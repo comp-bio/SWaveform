@@ -113,8 +113,8 @@ def cluster2motif(C):
         mm = ','.join([str(int(v)) for v in motif.mean(axis=0)])
         ms = ','.join(["{:.2f}".format(v) for v in motif.std(axis=0)])
 
-        filename = f'mt_{code}.{name}.{k+1}.motif'
-        f = open(f'{dir_}/{filename}', 'w')
+        filename = f'{dir_}/mt_{code}.{name}.{k+1}.motif'
+        f = open(filename, 'w')
         f.write("\n".join([
             f'type: {name}',
             f'sax_segments: {sax_w}',

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Usage: python3 Clusters_ADAKMS_bootstrap.py src:signals.bin sax:128 alphabet:32 window:32 dataset:50 repeats:100
 
-options = {'src': None, 'sax': 64, 'alphabet': 32, 'window': 32, 'dataset': 50, 'repeats': 1}
-seed = 1337 * 3
+options = {'src': None, 'sax': 64, 'alphabet': 32, 'window': 32, 'dataset': 50, 'repeats': 1, 'seed': 1337}
 
 import sys, os, base64, io, math, time
 import random, json, warnings
@@ -86,20 +85,20 @@ def diam(C):
 
 def dunn(results, max_clusters_use = 5):
     if len(results) < 2:
-        return [-1, 0, 0]
+        return 0
     if len(results) > max_clusters_use:
         results = results[0:max_clusters_use]
 
-    total_items = sum([len(C) for C in results])
     D = np.mean([diam(C) for C in results])
     if D == 0:
-        return [INF, total_items, len(results[0])]
+        return INF
 
     min_dist = INF
     for i in range(0, len(results) - 1):
         for j in range(i + 1, len(results)):
             min_dist = min(min_dist, clusters_dist(results[i], results[j]))
-    return [min_dist/D, total_items, len(results[0])]
+
+    return min_dist/D
 
 
 def find_KMS_v5(subs, seed, **kwargs):
@@ -122,12 +121,12 @@ def find_KMS_v5(subs, seed, **kwargs):
     for i in range(0, int(cnt/20)):
         for j in range(i, int(cnt/20)):
             saxs.append(saxdist(i, j))
-    quantile_use = [0.01, 0.025, 0.05, 0.10, 0.15, 0.2]
+    quantile_use = [0.025, 0.050, 0.100]
 
     info = []
     for q in quantile_use:
         threshold = np.quantile(saxs, q)
-        sys.stdout.write('\033[1;%sm%s\033[m' % (33, f'R {rep+1}/{options["repeats"]}  T:{threshold:.2f}  Q:{q}\r'))
+        sys.stdout.write('\033[1;%sm%s\033[m' % (33, f'R {rep+1}/{options["repeats"]}  T:{threshold:.2f}  Q:{q}   \r'))
         sys.stdout.flush()
         links = np.array([-1 for i in range(cnt)])
 
@@ -160,19 +159,21 @@ def find_KMS_v5(subs, seed, **kwargs):
 
         siz = np.array([[motif[v], v] for v in motif])
         if len(siz) == 0:
+            info.append({
+                'quantile': q,
+                'threshold': threshold,
+                'dunn': 0,
+                'motif': []
+            })
             continue
 
         mtf = siz[(-siz[:,0]).argsort()]
         results = [np.where(links == idx)[0] for cnt, idx in mtf]
 
-        dunn_value, max_count, total_count = dunn(results[0:5])
-
         info.append({
             'quantile': q,
             'threshold': threshold,
-            'dunn': dunn_value,
-            'max_count': max_count,
-            'total_count': total_count,
+            'dunn': dunn(results[0:5]),
             'motif': results_save(subs, results[0:5])
         })
 
@@ -200,10 +201,10 @@ name = os.path.basename(options['src']).replace('_filterd.bin', '')
 
 runs = []
 for rep in range(0, options['repeats']):
-    data = np.array(read_random(options['src'], options['dataset'], seed + rep))
+    data = np.array(read_random(options['src'], options['dataset'], options['seed'] + rep))
     scld = TimeSeriesScalerMeanVariance().fit_transform([compress(sig, 8) for sig in data])
 
-    model = TimeSeriesKMeans(n_clusters=2, n_init=1, metric="dtw", random_state=seed, n_jobs=32)
+    model = TimeSeriesKMeans(n_clusters=2, n_init=1, metric="dtw", random_state=options['seed'], n_jobs=32)
     pred = model.fit_predict(scld)
     
     results = []
@@ -217,7 +218,7 @@ for rep in range(0, options['repeats']):
                 obj = {'raw': signal[i:(i + options['window'])], 'offset': i, 'src': trsf[k]}
                 subs.append(type('new_dict', (object,), obj))
 
-        mt = find_KMS_v5(subs, seed=seed)
+        mt = find_KMS_v5(subs, seed=options['seed'])
         results.append({
             'cls': cls_index, 
             'cls_mean': [v[0] for v in np.mean(scld[pred == cls_index], axis=0)],
@@ -230,6 +231,7 @@ for rep in range(0, options['repeats']):
 
     runs.append(results)
 
+"""
 # Join clusters 
 A, B = ([runs[0][0]], [runs[0][1]])
 k = 'cls_mean'
@@ -239,11 +241,12 @@ for a, b in runs[1:]:
     run = [a, b] if fr < rr else [b, a]
     A.append(run[0])
     B.append(run[1])
+"""
 
 # Export
-out = f"{dir_}/CLS_ADA_KMS_{name}_s{options['sax']}-{options['alphabet']}_w{options['window']}_d{options['dataset']}_r{options['repeats']}.json"
+out = f"{dir_}/CLS2_ADAKMS_{name}_s{options['sax']}-{options['alphabet']}_w{options['window']}_d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json"
 with open(out, "w") as f:
-    json.dump([A, B], f)
+    json.dump(runs, f)
 
 print(f"")
 print(f"Result: {out}")
