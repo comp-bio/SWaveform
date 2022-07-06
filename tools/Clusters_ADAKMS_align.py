@@ -15,18 +15,21 @@ from tslearn.metrics import dtw
 # --------------------------------------------------------------------------- #
 
 start_time = time.time()
-dir_, code = sys.argv[1:3]
+dir_src, code = sys.argv[1:3]
+dir_ = dir_src.replace('/adakms/', '/models/')
+
+if not os.path.exists(dir_): os.makedirs(dir_)
 
 window = 32
-sax_h = 32
+sax_h = 24
 sax_w = 64
-quantile_use = [0.025, 0.050, 0.100]
+quantile_use = [0.015, 0.020, 0.025]
 
 bbox = dict(boxstyle="round", fc="white", alpha=0.7, ec="k", lw=1)
 sax = SymbolicAggregateApproximation(n_segments=window, alphabet_size_avg=sax_h)
 sax.fit_transform([[i] for i in range(0, window)])
 
-names = glob.glob(f'{dir_}/CLS2_ADAKMS_*{code}*.json')
+names = glob.glob(f'{dir_src}/*{code}*_s*.json')
 # --------------------------------------------------------------------------- #
 
 
@@ -40,7 +43,7 @@ def as_base64(func):
     return tmp
 
 
-def motif_dist(M1, M2, limit=80):
+def motif_dist(M1, M2, limit=16):
     dists = []
     for o1, s1 in M1[0:limit]:
         for o2, s2 in M2[0:limit]:
@@ -70,7 +73,7 @@ def get_groups(C, q):
 
 def motif_on_signal(ax, g, note):
     opacity = min(1, max(5/len(g), 0.002))
-    for offset, sig in g[0:8000]:
+    for offset, sig in g[0:5000]:
         motif = sig[offset:offset + window]
         ax.plot(sig, color='k', alpha=opacity)
         ax.plot(np.arange(offset, offset + window), motif, lw=3, color='C1', alpha=opacity)
@@ -82,7 +85,7 @@ def motif_on_signal(ax, g, note):
 def motif_only(ax, g):
     opacity = min(1, max(5/len(g), 0.002))
     motif_items = []
-    for offset, sig in g[0:4000]:
+    for offset, sig in g[0:3000]:
         motif = sig[offset:offset + window]
         ax.plot(motif, color='C1', alpha=opacity)
         motif_items.append(motif)
@@ -92,14 +95,14 @@ def motif_only(ax, g):
 
 @as_base64
 def motif_on_signal_small(g):
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(10, 6))
     plt.axis('off')
     motif_on_signal(ax, g, None)
 
 
 @as_base64
 def motif_only_small(g):
-    fig, ax = plt.subplots(figsize=(5, 5))
+    fig, ax = plt.subplots(figsize=(10, 10))
     plt.axis('off')
     motif_only(ax, g)
 
@@ -123,12 +126,35 @@ def motif_plot_detail(gpx):
 
 
 @as_base64
-def cluster_plot_detail(C, cls_name=None):
-    fig, ax = plt.subplots(figsize=(8, 5))
+def cluster_plot_small(C):
+    fig, ax = plt.subplots(figsize=(6, 4))
+    plt.axis('off')
+    opacity = 0.5
+    x = np.array([t['cls_mean'] for t in C]).mean(axis=0)
+    s = np.array([t['cls_std'] for t in C]).mean(axis=0)
+
+    ax.fill_between([i for i in range(0,64)], x + s/2, x - s/2, alpha=opacity, linewidth=0, color='k')
+    ax.plot(x, linewidth=1, alpha=1, color='b')
+    ax.set(xlim=(0, 63), ylim=(-1.8, 1.8))
+
+
+    fig, ax = plt.subplots(figsize=(6, 4))
+    plt.axis('off')
     for t in C:
         x, s = (np.array(t['cls_mean']), np.array(t['cls_std']))
-        opacity = 10/sum(s)/len(C)
+        opacity = max(10/sum(s)/len(C[0:2000]), 0.01)
         ax.fill_between([i for i in range(0,64)], x + s/2, x - s/2, alpha=opacity, linewidth=0, color='k')
+        ax.plot(x, linewidth=1, alpha=2 * opacity, color='b')
+    ax.set(xlim=(0, 63), ylim=(-1.8, 1.8))
+
+
+@as_base64
+def cluster_plot_detail(C, cls_name=None):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    for t in C[0:2000]:
+        x, s = (np.array(t['cls_mean']), np.array(t['cls_std']))
+        opacity = 0.01 # max(10/sum(s)/len(C[0:2000]), 0.01)
+        ax.fill_between([i for i in range(0, 64)], x + s/2, x - s/2, alpha=opacity, linewidth=0, color='k')
         ax.plot(x, linewidth=1, alpha=2 * opacity, color='b')
 
     note = 'Size: ~{:.2f}%'.format(100 * np.mean([t['elements']/t['dataset'] for t in C]))
@@ -136,18 +162,6 @@ def cluster_plot_detail(C, cls_name=None):
     ax.text(1.4, -1.68, note, ha="left", va="bottom", size=10, bbox=bbox)
     if cls_name == None: cls_name = ''
     ax.set_title(f'Cluster {cls_name}')
-
-
-@as_base64
-def cluster_plot_small(C):
-    fig, ax = plt.subplots(figsize=(3, 2))
-    plt.axis('off')
-    for t in C:
-        x, s = (np.array(t['cls_mean']), np.array(t['cls_std']))
-        opacity = 10/sum(s)/len(C)
-        ax.fill_between([i for i in range(0,64)], x + s/2, x - s/2, alpha=opacity, linewidth=0, color='k')
-        ax.plot(x, linewidth=1, alpha=2 * opacity, color='b')
-    ax.set(xlim=(0, 63), ylim=(-1.8, 1.8))
 
 
 def cluster2motif(C, cls_name):
@@ -162,7 +176,7 @@ def cluster2motif(C, cls_name):
     mm = ','.join([str(int(v)) for v in motif.mean(axis=0)])
     ms = ','.join(["{:.2f}".format(v) for v in motif.std(axis=0)])
 
-    filename = f'{dir_}/MT_{code}.{cls_name}.motif'
+    filename = f'{dir_}mt_{code}.{cls_name}.motif'
     f = open(filename, 'w')
     f.write("\n".join([
         f'type: {code}',
@@ -176,23 +190,28 @@ def cluster2motif(C, cls_name):
     f.close()
     print(f"Motif: {filename}")
 
+    cl_x = [float(i) for i in np.array([t['cls_mean'] for t in C]).mean(axis=0)]
+    cl_s = [float(i) for i in np.array([t['cls_std'] for t in C]).mean(axis=0)]
+
     info = {
-        'cluster': cls_name,
+        'cluster_name': cls_name,
         'code': code,
-        'part':'{:.2f}%'.format(100 * part),
-        'cluster': cluster_plot_small(C),
+        'part': '{:.2f}%'.format(100 * part),
+        'cluster_x': cl_x,
+        'cluster_s': cl_s,
         'motif_signal': motif_on_signal_small(g),
         'motif': motif_only_small(g)
     }
 
-    out = f"{dir_}/ADAKMS_small_{code}.{cls_name}.json"
+    out = f"{dir_}small_{code}.{cls_name}.json"
     with open(out, "w") as f:
         json.dump(info, f)
     print(f"Motif plot: {out}")
 
-    info['cluster_detail'] = cluster_plot_detail(C, cls_name)
     info['motif_detail'] = motif_plot_detail(gpx)
-    out = f"{dir_}/ADAKMS_detail_{code}.{cls_name}.json"
+    info['cluster_detail'] = cluster_plot_detail(C, cls_name)
+
+    out = f"{dir_}detail_{code}.{cls_name}.json"
     with open(out, "w") as f:
         json.dump(info, f)
     print(f"Motif plot [full]: {out}")
@@ -205,6 +224,8 @@ data = []
 for src in names:
     with open(src, 'r') as f:
         data.extend(json.load(f))
+print(f"Files: " + str(len(names)))
+print(f"Runs:  " + str(len(data)))
 
 # Align Clusters
 A, B = ([data[0][0]], [data[0][1]])
@@ -219,4 +240,7 @@ for a, b in data[1:]:
 cluster2motif(A, 'A')
 cluster2motif(B, 'B')
 
-print(f"Time: {int((time.time() - start_time)/60)} min.\n")
+sec_ = int(time.time() - start_time)
+min_ = int(sec_/60)
+
+print(f"Time:   {min_} min. ({sec_} sec.)\n")

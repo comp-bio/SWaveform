@@ -3,7 +3,10 @@ note.md
 .DS_Store
 .idea
 node_modules
-build
+build/main-*
+build/overview.json
+build/manifest.json
+build/models
 yarn.lock
 *.db
 upload.sh

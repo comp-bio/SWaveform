@@ -119,7 +119,7 @@ sax_motif = SymbolicAggregateApproximation(
 
 window_step = int(options['window']/8)
 dir_ = os.path.dirname(os.path.realpath(options['src']))
-name = os.path.basename(options['src']).replace('bin0412/HGDP_','').replace('_filterd.bin', '')
+name = os.path.basename(options['src']).replace('bin0412/HGDP_','').replace('_filtred.bin', '')
 
 runs = []
 for rep in range(0, options['repeats']):

@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
-# Usage: python3 Clusters_ADAKMS_bootstrap.py src:signals.bin sax:128 alphabet:32 window:32 dataset:50 repeats:100
+# pip install matplotlib numpy
+# Usage: python3 Clusters_ADAKMS_bootstrap.py \
+#   src:signals.bin sax:128 alphabet:32 window:32 dataset:50 repeats:100
 
 options = {'src': None, 'sax': 64, 'alphabet': 32, 'window': 32, 'dataset': 50, 'repeats': 1, 'seed': 1337}
 
+import tracemalloc
 import sys, os, base64, io, math, time
 import random, json, warnings
 import numpy as np
 import matplotlib.pyplot as plt
 
 warnings.filterwarnings("ignore")
+tracemalloc.start()
 
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance
 from tslearn.piecewise import SymbolicAggregateApproximation
@@ -121,7 +125,7 @@ def find_KMS_v5(subs, seed, **kwargs):
     for i in range(0, int(cnt/20)):
         for j in range(i, int(cnt/20)):
             saxs.append(saxdist(i, j))
-    quantile_use = [0.025, 0.050, 0.100]
+    quantile_use = [0.015, 0.020, 0.025]
 
     info = []
     for q in quantile_use:
@@ -162,7 +166,7 @@ def find_KMS_v5(subs, seed, **kwargs):
             info.append({
                 'quantile': q,
                 'threshold': threshold,
-                'dunn': 0,
+                # 'dunn': 0,
                 'motif': []
             })
             continue
@@ -173,7 +177,7 @@ def find_KMS_v5(subs, seed, **kwargs):
         info.append({
             'quantile': q,
             'threshold': threshold,
-            'dunn': dunn(results[0:5]),
+            # 'dunn': dunn(results[0:5]),
             'motif': results_save(subs, results[0:5])
         })
 
@@ -197,7 +201,7 @@ sax_motif = SymbolicAggregateApproximation(
 
 window_step = int(options['window']/8)
 dir_ = os.path.dirname(os.path.realpath(options['src']))
-name = os.path.basename(options['src']).replace('_filterd.bin', '')
+name = os.path.basename(options['src']).replace('_filtred.bin', '')
 
 runs = []
 for rep in range(0, options['repeats']):
@@ -211,13 +215,11 @@ for rep in range(0, options['repeats']):
     for cls_index in [0, 1]:
         cls = TimeSeriesScalerMeanVariance().fit_transform(data[pred == cls_index])
         trsf = sax.fit_transform(cls)
-        
         subs = []
         for k, signal in enumerate(trsf):
             for i in range(0, len(signal) - options['window'] + 1, window_step):
                 obj = {'raw': signal[i:(i + options['window'])], 'offset': i, 'src': trsf[k]}
                 subs.append(type('new_dict', (object,), obj))
-
         mt = find_KMS_v5(subs, seed=options['seed'])
         results.append({
             'cls': cls_index, 
@@ -244,10 +246,15 @@ for a, b in runs[1:]:
 """
 
 # Export
-out = f"{dir_}/CLS2_ADAKMS_{name}_s{options['sax']}-{options['alphabet']}_w{options['window']}_d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json"
+if not os.path.exists(f"{dir_}/adakms"): os.makedirs(f"{dir_}/adakms")
+out = f"{dir_}/adakms/{name}_s{options['sax']}-{options['alphabet']}_w{options['window']}_d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json"
 with open(out, "w") as f:
     json.dump(runs, f)
 
-print(f"")
-print(f"Result: {out}")
-print(f"Time:   {int((time.time() - start_time)/60)} min.\n")
+m_cur, m_max = tracemalloc.get_traced_memory()
+sec_ = int(time.time() - start_time)
+min_ = int(sec_/60)
+
+print(f"Time:   {min_} min. ({sec_} sec.)")
+print(f"Memory: {int(m_max/1024/1024)}MB\n")
+print(f"Result: {out}\n")

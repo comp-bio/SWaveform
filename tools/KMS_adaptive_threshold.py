@@ -175,8 +175,8 @@ for k in CACHE:
 
 # ---------------------------------------------------------------------------- #
 dir_ = os.path.dirname(os.path.realpath(options['src']))
-name = os.path.basename(options['src']).replace('_filterd.bin', '')
-out = f"{dir_}/ADA_TRM_{name}.d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json".replace('_filterd.bin', '')
+name = os.path.basename(options['src']).replace('_filtred.bin', '')
+out = f"{dir_}/ADA_TRM_{name}.d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json".replace('_filtred.bin', '')
 with open(out, 'w') as f:
     json.dump({'repeats': repeats, 'histogram': histogram}, f)
 

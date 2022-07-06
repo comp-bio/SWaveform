@@ -526,18 +526,4 @@
     width: 100%;
   }
 }
-.model-items {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 18px;
 
-  .model-item {
-    width: 33.333%;
-    position: relative;
-
-    img {
-      width: 100%;
-      display: block;
-    }
-  }
-}

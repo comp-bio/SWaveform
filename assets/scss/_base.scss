@@ -25,9 +25,15 @@ p {
   line-height: 1.4em;
 }
 
-ul {
+ul, ol {
   line-height: 1.4em;
   padding-inline-start: 1.1em;
+
+  ol {
+    padding-top: 4px;
+    padding-inline-start: 1.8em;
+    font-size: 96%;
+  }
 
   li {
     margin-bottom: 0.4em;
@@ -57,6 +63,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   background: #eeeeee2e;
+  margin-bottom: 16px;
 
   th {
     color: #333;
@@ -199,6 +206,14 @@ table {
   margin-bottom: 20px;
 
   .h1 {
+    a {
+      display: flex;
+      align-items: center;
+    }
+    .logo {
+      height: 40px;
+      margin-right: 10px;
+    }
     strong {
       display: block;
       font-weight: normal;
@@ -318,50 +333,71 @@ table {
   margin-bottom: 18px;
 }
 
-.cluster-group {
-  border-left: 8px solid rgb(78, 121, 167, 0.3);
-  padding: 5px 0 15px 30px;
-  border-bottom: 1px dashed #999;
+.model-items {
+  margin-bottom: 18px;
 
-  &:nth-child(odd) {
-    border-left: 8px solid rgb(237, 201, 73, 0.3);
-  }
-}
-
-.cluster {
-  h5 {
-    margin-bottom: 5px;
-    margin-top: 12px;
-
-    code {
-      font-size: 100%;
-    }
-  }
-
-  .plot-list {
+  .model-item {
     display: flex;
-    margin-left: -23px;
+    align-items: center;
+    margin-bottom: 40px;
 
-    img {
-      display: block;
-      max-width: 100%;
+    .img-type {
+      height: 356px;
     }
 
-    .img {
-      width: 20%;
-      position: relative;
+    .m-clusters {
 
-      .button {
-        transition: opacity 0.15s ease;
-        opacity: 0;
-        position: absolute;
-        right: 10px;
-        bottom: 20px;
-      }
+      .cluster {
+        height: 146px;
+        display: flex;
+        padding: 8px;
+        border: 3px solid #e8e8e8;
+        border-radius: 6px;
+        margin: 5px 0;
+        position: relative;
 
-      &:hover {
-        .button {
-          opacity: 1;
+        &.empty {
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          color: #d7d7d7;
+          font-weight: bold;
+          letter-spacing: 0.05em;
+        }
+
+        .part {
+          position: absolute;
+          border: 3px solid #e8e8e8;
+          top: -3px;
+          left: -3px;
+          background: rgba(#fff,0.7);
+          border-radius: 6px 0 6px 0;
+        }
+
+        .img-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          .button {
+            position: absolute;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+          }
+        }
+
+        .img {
+          height: 124px;
+        }
+
+        &:hover {
+          .img-wrap {
+            .button {
+              opacity: 1;
+            }
+          }
         }
       }
     }

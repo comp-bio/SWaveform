@@ -26,7 +26,7 @@ class Histogram extends React.Component {
   
     Object.keys(this.obj).map(side => {
       const info = this.obj[side];
-      console.log('info', info);
+      //console.log('info', info);
       for (let i = 0; i < info.hist.length - 1; i++) {
         if (info.hist[i] > info.count/10) this.plot_width = i;
         this.plot_height = d3.max([info.hist[i], this.plot_height]);

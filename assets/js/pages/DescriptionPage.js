@@ -105,6 +105,30 @@ class DescriptionPage extends React.Component {
               return (
                 <div className={'dataset-group'} key={ds}>
                   <h4 className={'h4'}>Dataset: <strong>{ds}</strong></h4>
+                  <table>
+                    <thead><tr><th>Type of SV &rarr;</th>{Object.keys(d.types).map(type => <th key={type}>{type}</th>)}</tr></thead>
+                    <tbody>
+                      {['Left', 'Right', 'Center'].map(k =>
+                        <tr key={k}>
+                          <td><span className={`tag side-${k[0]}`}>{k[0]}</span> {k}:</td>
+                          {Object.keys(d.types).map(type => {
+                            let s = 0;
+                            Object.keys(d.types[type]).map(p => {
+                              if (d.stat[p][type][k[0]]) s += d.stat[p][type][k[0]].count;
+                            })
+                            return <td key={type}>{s}</td>;
+                          })}
+                        </tr>
+                      )}
+                      <tr>
+                        <td><strong>Total:</strong></td>
+                        {Object.keys(d.types).map(type => {
+                          let s = Object.values(d.types[type]).reduce((a, curr) => a + curr)
+                          return <td key={type}>{s}</td>;
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
 
                   <table>
                     <thead><tr><th>Population (samples)</th>{Object.keys(d.types).map(type => <th key={type}>{type}</th>)}</tr></thead>

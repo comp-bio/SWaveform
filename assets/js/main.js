@@ -17,7 +17,7 @@ ReactDOM.render(
         <div className={'container'}>
             <header className={'header'}>
                 <h1 className="h1">
-                    <NavLink to={`/`}>SWaveform</NavLink>
+                    <NavLink to={`/`}><img className={'logo'} src={'/media/logo.png'} /> SWaveform</NavLink>
                 </h1>
                 <nav className={'nav'}>
                     <NavLink className={'link'} exact activeClassName={'active'} to={`/`}>

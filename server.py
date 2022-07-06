@@ -2,7 +2,7 @@
 # Usage: python3 server.py signal.db
 
 import os, sys, re, json, glob, sqlite3, warnings
-from flask import jsonify, request, Flask, send_file, send_from_directory
+from flask import jsonify, request, Flask, send_file, send_from_directory, redirect
 from gevent.pywsgi import WSGIServer
 
 warnings.filterwarnings("ignore")
@@ -34,7 +34,7 @@ def overview():
         return [os.path.basename(src) for src in sorted(glob.glob(root))]
     return jsonify({
         'models': fx(f"./build/models/*.png"),
-        'meta': fx(f"./build/models/meta*.json")
+        'meta': fx(f"./build/models/detail*.json")
     })
     #res = re.search("meta_(.+)\.([A-Za-z_]+)_s([0-9]+)-([0-9]+)_w([0-9]+)_d([0-9]+)_r([0-9]+).json", src)
     #code, name = res.groups()[0:2]
@@ -90,6 +90,16 @@ def signal():
 @app.route('/models')
 def root():
     return app.send_static_file('index.html')
+
+
+@app.route('/download')
+def download():
+    return redirect("https://drive.google.com/")
+
+
+@app.route('/media/<path>')
+def models(path):
+    return send_from_directory('./build/media/', path)
 
 
 @app.route('/models/<path>')

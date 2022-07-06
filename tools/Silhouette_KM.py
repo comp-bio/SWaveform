@@ -19,6 +19,10 @@ def read_coverage(f, num = 0):
     return [(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)]
 
 
+def compress(sig, K=2):
+    return [sum(sig[i:i+K])/K for i in range(0, len(sig), K)]
+
+
 def read_random(f, count=100, seed=0):
     random.seed(seed)
     index_range = range(int(os.path.getsize(f)/1024))
@@ -33,20 +37,25 @@ def func(clusters, dataset):
 
 # ---------------------------------------------------------------------------- #
 src, sample_size, repeats = (sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
-dir, name = (os.path.dirname(os.path.realpath(src)), os.path.basename(src).replace("_filterd.bin", ""))
+dir, name = (os.path.dirname(os.path.realpath(src)), os.path.basename(src).replace("_filtred.bin", ""))
 
 start_time = time.time()
 results = []
 for s_i in range(0, repeats):
-    data = read_random(src, sample_size, seed + s_i)
+    dt = read_random(src, sample_size, seed + s_i)
+    data = [compress(sig, 8) for sig in dt]
     tsts = TimeSeriesScalerMeanVariance().fit_transform(data)
     results.append([func(num_cls, tsts) for num_cls in range(2, max_clusters)])
 
-out = f"{dir}/silhouette_{name}.json"
+if not os.path.exists(f"{dir}/silhouette"): os.makedirs(f"{dir}/silhouette")
+out = f"{dir}/silhouette/{name}_s{sample_size}_r{repeats}.json"
 with open(out, "w") as f:
     json.dump(results, f)
 
+sec_ = int(time.time() - start_time)
+min_ = int(sec_/60)
+
+print(f"Time:     {min_} min. ({sec_} sec.)")
 print(f"Size:     {sample_size}")
 print(f"Repeats:  {repeats}")
-print(f"Time:     %s min." % int((time.time() - start_time)/60))
-print(f"Result:   {out}")
+print(f"Result:   {out}\n")

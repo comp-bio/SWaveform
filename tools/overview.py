@@ -66,7 +66,7 @@ def type_plot(data, name):
     for x in data:
         opacity = 10/len(data)
         ax.plot(x, linewidth=1, alpha=opacity, color='k')
-    ax.set_title(os.path.basename(name).replace('_filterd.bin', ''))
+    ax.set_title(os.path.basename(name).replace('_filtred.bin', ''))
     plt.savefig(f'{name}.plt.png', format='png', bbox_inches="tight")
     plt.close()
 
@@ -86,7 +86,7 @@ files = {}
 cur.execute(f"SELECT s.coverage, s.size, s.type, s.side FROM signal as s")
 for sig, size, tp, side in cur.fetchall():
     if size < 256 and side != 'C': continue
-    name = f"{root}build/models/{tp}_{side}_filterd.bin"
+    name = f"{root}build/models/{tp}_{side}_filtred.bin"
     if name not in files: files[name] = open(name, 'wb')
     files[name].write(sig)
 

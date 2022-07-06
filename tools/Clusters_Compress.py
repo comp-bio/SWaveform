@@ -48,15 +48,20 @@ def test(dataset_size, K, repeats, seed):
 
 # ---------------------------------------------------------------------------- #
 src, repeats = (sys.argv[1], int(sys.argv[2]),)
-dir, name = (os.path.dirname(os.path.realpath(src)), os.path.basename(src).replace("_filterd.bin", ""))
+dir, name = (os.path.dirname(os.path.realpath(src)), os.path.basename(src).replace("_filtred.bin", ""))
 
 start_time = time.time()
-dataset_sizes = [2, 100]
+dataset_sizes = [100]
 stat = [test(size, K, repeats, seed) for size in dataset_sizes]
 
-out = f"{dir}/compress_{name}.json"
+if not os.path.exists(f"{dir}/compress"): os.makedirs(f"{dir}/compress")
+out = f"{dir}/compress/{name}_r{repeats}.json"
 with open(out, "w") as f:
     json.dump(stat, f)
 
+sec_ = int(time.time() - start_time)
+min_ = int(sec_/60)
+
+print(f"Time:     {min_} min. ({sec_} sec.)")
 print(f"Repeats:  {repeats}")
-print(f"Time:     {int((time.time() - start_time)/60)} min.\n")
+print(f"Result:   {out}\n")
