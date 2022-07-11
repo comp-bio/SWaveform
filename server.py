@@ -98,7 +98,7 @@ def download():
 
 
 @app.route('/media/<path>')
-def models(path):
+def media(path):
     return send_from_directory('./build/media/', path)
 
 

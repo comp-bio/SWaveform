@@ -57,7 +57,7 @@ class ModelsPage extends React.Component {
       <>
         <div className={'part'}>
           <h2 className="h2">Explanation for the charts:</h2>
-          <p className="lead">
+          <div className="lead">
             <ul>
               <li>The large image on the left shows a graph of the signals after SAX transformation, for each type of structural variation.</li>
               <li>To the right of the image there are two clusters for each type of structural variation.</li>
@@ -70,7 +70,7 @@ class ModelsPage extends React.Component {
                 </ol>
               </li>
             </ul>
-          </p>
+          </div>
         </div>
         
         <div className={'model-items'}>

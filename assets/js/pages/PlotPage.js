@@ -25,7 +25,7 @@ class PlotPage extends React.Component {
         this.overview = overview;
         
         console.log('overview', overview);
-        
+
         this.state = {
             'dataset': '',
             'populations': [],
