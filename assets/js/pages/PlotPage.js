@@ -3,16 +3,14 @@ import KaryotypeBar from "../components/KaryotypeBar";
 import Signal from "../components/Signal";
 import LoadSignal from "../components/LoadSignal";
 import example_signal from "../components/annotation.signal";
+import axios from "axios";
 
 const d3 = require('d3')
-const overview = require('../../../build/overview.json')
 const karyotypes = {
     'GRCh37': require('../../../data/GRCh37.json'),
     'GRCh38': require('../../../data/GRCh38.json')
 }
 
-const types = Object.values(overview['ds']).map(v => Object.keys(v['types'])).flat();
-const type_color = d3.scaleOrdinal().domain(types).range(d3.schemeTableau10);
 const side_color = (t) => ({'L': '#F00', 'R': '#080', 'C': '#009'}[t]);
 
 let timer = null;
@@ -20,13 +18,10 @@ let timer = null;
 class PlotPage extends React.Component {
     constructor(props) {
         super(props);
-        
         this.karyotypes = karyotypes;
-        this.overview = overview;
-        
-        console.log('overview', overview);
 
         this.state = {
+            'overview': false,
             'dataset': '',
             'populations': [],
             'population': '',
@@ -37,9 +32,8 @@ class PlotPage extends React.Component {
             'more': true,
             'windowWidth': window.innerWidth
         };
-        
-        types.map(k => { this.state['types'][k] = true; });
-        
+
+        // types.map(k => { this.state['types'][k] = true; });
         this.loader = new LoadSignal(this);
         this.onResize = this.onResize.bind(this);
     }
@@ -60,13 +54,25 @@ class PlotPage extends React.Component {
     }
     
     componentDidMount() {
-        this.selectDataset(Object.keys(overview['ds'])[0]);
+        axios({
+            url: `/api/overview`,
+            method: 'get'
+        }).then((res) => {
+            console.log('res', res.data);
+            let obj = {'overview': res.data};
+            obj['types'] = Object.values(res.data['ds']).map(v => Object.keys(v['types'])).flat();
+            obj['type_color'] = d3.scaleOrdinal().domain(obj['types']).range(d3.schemeTableau10);
+            this.setState(obj, () => {
+                this.selectDataset(Object.keys(res.data['ds'])[0]);
+            });
+        });
+
         this.gmap = KaryotypeBar('#gmap', this);
         window.addEventListener("resize", this.onResize);
     }
     
     componentWillUnMount() {
-        window.addEventListener("resize", this.onResize);
+        window.removeEventListener("resize", this.onResize);
     }
     
     validate(force = true) {
@@ -79,7 +85,7 @@ class PlotPage extends React.Component {
     }
     
     selectDataset(name) {
-        let ds = overview['ds'][name];
+        let ds = this.state.overview['ds'][name];
         
         let types = {};
         Object.keys(ds['types']).map(k => { types[k] = true; })
@@ -137,7 +143,7 @@ class PlotPage extends React.Component {
                   <div className={'signal-wrapper'} key={k}>
                       <div className={'hints'}>
                           <span>
-                            <span className={'circle'} style={{background: type_color(e.type)}} />
+                            <span className={'circle'} style={{background: this.state.type_color(e.type)}} />
                             <span className={'tag'}>{e.type}</span>
                             <span className={`tag side-${e.side}`}>{e.side}</span>
                           </span>
@@ -191,7 +197,9 @@ class PlotPage extends React.Component {
                       <select
                         value={this.state['dataset']} className={'selector button'}
                         onChange={(e) => this.selectDataset(e.target.value)}>
-                          {Object.keys(overview['ds']).map(k => <option key={k} value={k}>{k} ({overview['ds'][k]['genome']})</option>)}
+                          {this.state.overview ? (
+                              Object.keys(this.state.overview['ds']).map(k => <option key={k} value={k}>{k} ({this.state.overview['ds'][k]['genome']})</option>)
+                          ) : ''}
                       </select>
                   </div>
                   {this.state['populations'] ? (
@@ -206,7 +214,7 @@ class PlotPage extends React.Component {
                   ) : ''}
                   <div className={'group filters'}>
                       <span className={'label'}>Filter by type:</span>
-                      <div>{Object.keys(this.state['types']).map(name => this.checkbox(name, 'types', type_color))}</div>
+                      <div>{Object.keys(this.state['types']).map(name => this.checkbox(name, 'types', this.state.type_color))}</div>
                   </div>
                   <div className={'group filters'}>
                       <span className={'label'}>Filter by type:</span>

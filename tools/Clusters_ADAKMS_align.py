@@ -7,32 +7,64 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+start_time = time.time()
+options = {'db': '', 'prefix': '', 'sax': 64, 'alphabet': 24, 'window': 32}
+for par in sys.argv[1:]:
+    k, v = (par + ':').split(':')[0:2]
+    if k in options:
+        options[k] = v if k in ['db', 'prefix'] else int(v)
+
+def echo(text, color='37'):
+    sys.stdout.write("\033[1;%sm%s\033[m" % (color, text))
+    sys.stdout.flush()
+
+def usage():
+    echo('Usage:\n')
+    echo('  python3 %s \\\n' % sys.argv[0])
+    echo('    db:[DB path name] \\\n')
+    echo('    prefix:[dataset name]\n')
+    exit(1)
+
+if options['db'] == '':
+    echo(f"Error:\n", 31)
+    echo(f"  Database not found! (db:./path-to-db)\n\n", 31)
+    usage()
+
+if options['prefix'] == '':
+    echo(f"Error:\n", 31)
+    echo(f"  Prefix not found! (use prefix:NAME_TYPE_SIDE)\n\n", 31)
+    usage()
+
+names = glob.glob(f"{options['db']}/adakms/{options['prefix']}*.json")
+if len(names) == 0:
+    echo(f"Error:\n", 31)
+    echo(f"  Bootstrap results not found! (use prefix:NAME_TYPE_SIDE)\n\n", 31)
+    usage()
+
+for name in names:
+    m = re.match(r'.*_s(?P<sax>\d+)-(?P<alphabet>\d+)_w(?P<window>\d+)_.+', os.path.basename(name))
+    params = m.groupdict()
+    for k in params:
+        options[k] = int(params[k])
+
 warnings.filterwarnings("ignore")
 
 from tslearn.piecewise import SymbolicAggregateApproximation
 from tslearn.metrics import dtw
 
 # --------------------------------------------------------------------------- #
+dir_ = f"{options['db']}/models/"
+if not os.path.exists(dir_):
+    os.makedirs(dir_)
 
-start_time = time.time()
-dir_src, code = sys.argv[1:3]
-dir_ = dir_src.replace('/adakms/', '/models/')
-
-if not os.path.exists(dir_): os.makedirs(dir_)
-
-window = 32
-sax_h = 24
-sax_w = 64
 quantile_use = [0.015, 0.020, 0.025]
+quantile_use = [0.015]
 
 bbox = dict(boxstyle="round", fc="white", alpha=0.7, ec="k", lw=1)
-sax = SymbolicAggregateApproximation(n_segments=window, alphabet_size_avg=sax_h)
-sax.fit_transform([[i] for i in range(0, window)])
+sax = SymbolicAggregateApproximation(n_segments=options['sax'], alphabet_size_avg=options['alphabet'])
+sax.fit_transform([[i] for i in range(0, options['window'])])
 
-names = glob.glob(f'{dir_src}/*{code}*_s*.json')
 # --------------------------------------------------------------------------- #
-
-
 def as_base64(func):
     def tmp(*args, **kwargs):
         s = io.BytesIO()
@@ -47,7 +79,7 @@ def motif_dist(M1, M2, limit=16):
     dists = []
     for o1, s1 in M1[0:limit]:
         for o2, s2 in M2[0:limit]:
-            k1, k2 = (np.array(s1[o1:o1+window]).reshape(window, 1), np.array(s2[o2:o2+window]).reshape(window, 1))
+            k1, k2 = (np.array(s1[o1:o1+options['window']]).reshape(options['window'], 1), np.array(s2[o2:o2+options['window']]).reshape(options['window'], 1))
             dists.append(sax.distance_sax(k1, k2))
     return np.mean(dists)
 
@@ -66,17 +98,18 @@ def get_groups(C, q):
                 groups[k_min].extend(M)
             else:
                 groups.append(M)
-    groups.sort(key = len)
-    groups.reverse()
+    if groups != None:
+        groups.sort(key = len)
+        groups.reverse()
     return groups
 
 
 def motif_on_signal(ax, g, note):
     opacity = min(1, max(5/len(g), 0.002))
     for offset, sig in g[0:5000]:
-        motif = sig[offset:offset + window]
+        motif = sig[offset:offset + options['window']]
         ax.plot(sig, color='k', alpha=opacity)
-        ax.plot(np.arange(offset, offset + window), motif, lw=3, color='C1', alpha=opacity)
+        ax.plot(np.arange(offset, offset + options['window']), motif, lw=3, color='C1', alpha=opacity)
     if note:
         ax.text(2, 1.4, note, ha="left", va="bottom", size=10, bbox=bbox)
     ax.set(xlim=(0, 63), ylim=(0, 23))
@@ -86,7 +119,7 @@ def motif_only(ax, g):
     opacity = min(1, max(5/len(g), 0.002))
     motif_items = []
     for offset, sig in g[0:3000]:
-        motif = sig[offset:offset + window]
+        motif = sig[offset:offset + options['window']]
         ax.plot(motif, color='C1', alpha=opacity)
         motif_items.append(motif)
     ax.plot(np.array(motif_items).mean(axis=0), lw=3, color='r')
@@ -168,24 +201,29 @@ def cluster2motif(C, cls_name):
     part = np.mean([t['elements']/t['dataset'] for t in C])
     if part < 1/3: return None
 
-    gpx = [get_groups(C, q) for q in range(3)]
-    g = gpx[0][0]
-    motif = np.array([sig[offset:offset + window] for offset, sig in g])
+    # gpx = [get_groups(C, q) for q in range(3)]
+    # g = gpx[0][0]
+    gp = get_groups(C, 0)
+    if not gp:
+        print(f"Motif not found for class: {cls_name}")
+        return
+    g = gp[0]
+    motif = np.array([sig[offset:offset + options['window']] for offset, sig in g])
     offset = np.array([offset for offset, sig in g])
 
     mm = ','.join([str(int(v)) for v in motif.mean(axis=0)])
     ms = ','.join(["{:.2f}".format(v) for v in motif.std(axis=0)])
 
-    filename = f'{dir_}mt_{code}.{cls_name}.motif'
+    filename = f"{dir_}mt_{options['prefix']}.{cls_name}.motif"
     f = open(filename, 'w')
     f.write("\n".join([
-        f'type: {code}',
-        f'sax_segments: {sax_w}',
-        f'sax_alphabet: {sax_h}',
+        f"type: {options['prefix']}",
+        f"sax_segments: {options['sax']}",
+        f"sax_alphabet: {options['alphabet']}",
         f'offset: {offset.mean()}',
         f'offset_std: {offset.std()}',
         f'motif: {mm}',
-        f'motif_std: {ms}',
+        f'motif_std: {ms}'
     ]))
     f.close()
     print(f"Motif: {filename}")
@@ -195,7 +233,7 @@ def cluster2motif(C, cls_name):
 
     info = {
         'cluster_name': cls_name,
-        'code': code,
+        'code': options['prefix'],
         'part': '{:.2f}%'.format(100 * part),
         'cluster_x': cl_x,
         'cluster_s': cl_s,
@@ -203,15 +241,15 @@ def cluster2motif(C, cls_name):
         'motif': motif_only_small(g)
     }
 
-    out = f"{dir_}small_{code}.{cls_name}.json"
+    out = f"{dir_}small_{options['prefix']}.{cls_name}.json"
     with open(out, "w") as f:
         json.dump(info, f)
     print(f"Motif plot: {out}")
 
-    info['motif_detail'] = motif_plot_detail(gpx)
+    #info['motif_detail'] = motif_plot_detail(gpx)
     info['cluster_detail'] = cluster_plot_detail(C, cls_name)
 
-    out = f"{dir_}detail_{code}.{cls_name}.json"
+    out = f"{dir_}detail_{options['prefix']}.{cls_name}.json"
     with open(out, "w") as f:
         json.dump(info, f)
     print(f"Motif plot [full]: {out}")
@@ -242,5 +280,4 @@ cluster2motif(B, 'B')
 
 sec_ = int(time.time() - start_time)
 min_ = int(sec_/60)
-
 print(f"Time:   {min_} min. ({sec_} sec.)\n")

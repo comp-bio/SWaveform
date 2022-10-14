@@ -1,26 +1,31 @@
 # -*- coding: utf-8 -*-
-
 import sys, os, re
 import sqlite3, gzip
 from _functions import *
 
+options = {'db': '', 'path': '', 'name': ''}
+for par in sys.argv[1:]:
+    k, v = (par + ':').split(':')[0:2]
+    if k in options: options[k] = v
+
 # --------------------------------------------------------------------------- #
-if len(sys.argv) < 3:
-    echo('Usage:   python3 %s [DB sqlite file] [coverage path] [dataset]\n' % sys.argv[0])
-    echo('Example: python3 %s ./signal.db HG002/coverage HGDP\n\n' % sys.argv[0])
+if options['db'] == '' or not os.path.isfile(f"{options['db']}/index.db"):
+    echo('Usage:\n')
+    echo('  python3 %s \\\n' % sys.argv[0])
+    echo('    db:[DB directory] \\\n')
+    echo('    path:[coverage directory] \\\n')
+    echo('    name:[dataset name]\n')
     sys.exit(1)
 
 # --------------------------------------------------------------------------- #
-db_file, coverage_path = sys.argv[1:3]
-con = sqlite3.connect(db_file)
+con = sqlite3.connect(f"{options['db']}/index.db")
 cur = con.cursor()
+storage = open(f"{options['db']}/storage.bcov", 'ab')
+storage_offset = int(os.path.getsize(f"{options['db']}/storage.bcov")/2)
 
 # --------------------------------------------------------------------------- #
-if len(sys.argv) >= 4:
-    ds = sys.argv[3]
-    cur.execute(f"SELECT id, name, file FROM target WHERE dataset = '{ds}'")
-else:
-    cur.execute("SELECT id, name, file FROM target")
+filter = f" WHERE dataset = '{options['name']}'" if options['name'] != '' else ""
+cur.execute("SELECT id, name, file FROM target" + filter)
 
 notfound = {}
 total = 0
@@ -33,9 +38,9 @@ for t_id, name, file in cur.fetchall():
     for id, chr, start, end in cur.fetchall():
         if start < 0: continue
         if chr[0:3] == 'chr': chr = chr[3:]
-        cov_file = "%s/%s/%s.bcov" % (coverage_path, file, chr)
+        cov_file = "%s/%s/%s.bcov" % (options['path'], file, chr)
         if not os.path.isfile(cov_file):
-            cov_file = "%s/%s/chr%s.bcov" % (coverage_path, file, chr)
+            cov_file = "%s/%s/chr%s.bcov" % (options['path'], file, chr)
         if not os.path.isfile(cov_file):
             notfound[cov_file] = True
             continue
@@ -47,8 +52,15 @@ for t_id, name, file in cur.fetchall():
             cur.execute(f"DELETE FROM signal WHERE id = ?", (id,))
             no_coverage += 1
             continue
-        cur.execute(f"UPDATE signal set coverage = ? WHERE id = ?", (bin_data, id,))
+        if len(bin_data) != (end - start + 1) * 2:
+            cur.execute(f"DELETE FROM signal WHERE id = ?", (id,))
+            no_coverage += 1
+            continue
+        cur.execute(f"UPDATE signal set coverage_offset = ? WHERE id = ?", (storage_offset, id,))
+        storage_offset += (end - start + 1)
+        storage.write(bin_data)
 
+storage.close()
 con.commit()
 echo('Done%s\n' % (" " * 60))
 

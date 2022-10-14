@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "signal" (
   "side" text(32) NOT NULL, -- 'Left, right or center breakpoint of the SV (L, R, C)',
   "size" integer NOT NULL, -- 'SV size (Distance between breakpoints)',
   "genotype" integer NOT NULL, -- 'Genotype (1 for 1/0, 2 for 1/1)',
-  "coverage" blob NOT NULL, -- 'Coverage values in binary format',
+  "coverage_offset" integer NOT NULL, -- 'Coverage offset (for ext. binary file)',
   FOREIGN KEY ("target_id") REFERENCES "target" ("id")
 );
 

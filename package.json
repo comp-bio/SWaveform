@@ -9,6 +9,7 @@
     "mini-css-extract-plugin": "^2.1.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
+    "react-gtm-module": "^2.0.11",
     "react-router-dom": "^5.2.0",
     "react-router-ga": "^1.2.3",
     "regenerator-runtime": "^0.13.9",
@@ -41,9 +42,9 @@
     ]
   },
   "scripts": {
-    "server": "export NODE_OPTIONS=--openssl-legacy-provider && webpack serve --mode development --env development --hot --progress --inline --config webpack.config.js",
-    "build": "export NODE_OPTIONS=--openssl-legacy-provider && rm -f build/main-* && NODE_ENV=production webpack --config webpack.config.js",
+    "server": "webpack serve --mode development --env development --hot --progress --inline --config webpack.config.js",
+    "build": "rm -f build/main-* && NODE_ENV=production webpack --config webpack.config.js",
     "py": "python3 server.py",
-    "pub": "NAME=\"sw-$(date +%d-%b-%Y)-iface.zip\" && zip -x \"*/.*\" -r $NAME ./build server.py *.db"
+    "pub": "NAME=\"swaveform-$(date +%d-%b-%Y).zip\" && zip -x \"*/.*\" -r $NAME ./build server.py"
   }
 }

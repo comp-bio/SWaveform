@@ -1,5 +1,4 @@
 import React from 'react';
-import overview from "../../../build/overview.json";
 const d3 = require('d3');
 
 const gradients = {
@@ -134,7 +133,7 @@ function KaryotypeBar(el, parent) {
       .attr('fill-opacity', 0.7)
       .attr('d', line);
 
-  const dens = parent.overview['ds'][ds].density[state.chr];
+  const dens = parent.state.overview['ds'][ds].density[state.chr];
   const m = d3.max(dens.l) * 0.5;
 
   let v = dens.l.map((v, i) => [i * dens.step + 1, v > m ? m : v]);

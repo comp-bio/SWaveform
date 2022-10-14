@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {BrowserRouter as Router, NavLink, Route, Switch} from 'react-router-dom'
-import Analytics from 'react-router-ga';
+import TagManager from 'react-gtm-module'
 
 import sizes from "../scss/main.scss";
 import 'highlight.js/scss/github.scss'
@@ -10,6 +10,10 @@ window.sizes = sizes;
 import PlotPage from './pages/PlotPage';
 import DescriptionPage from './pages/DescriptionPage';
 import ModelsPage from './pages/ModelsPage';
+
+TagManager.initialize({
+  gtmId: 'G-WZG2ZRFXTQ'
+});
 
 const ErrorPage = () => <div className={'error-page'}>Not found</div>;
 
@@ -34,14 +38,12 @@ ReactDOM.render(
             </header>
         </div>
         <section className={'container content'}>
-          <Analytics id="G-WZG2ZRFXTQ" debug>
-            <Switch>
-                <Route exact path="/" component={PlotPage} />
-                <Route path="/description" component={DescriptionPage} />
-                <Route path="/models" component={ModelsPage} />
-                <Route path="*" component={ErrorPage} />
-            </Switch>
-          </Analytics>
+          <Switch>
+            <Route exact path="/" component={PlotPage} />
+            <Route path="/description" component={DescriptionPage} />
+            <Route path="/models" component={ModelsPage} />
+            <Route path="*" component={ErrorPage} />
+          </Switch>
         </section>
         <footer className={'container'}>
             <div className={'bottom'}>2020–2022г.</div>
