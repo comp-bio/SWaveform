@@ -1,5 +1,19 @@
 # SWaveform
 
+## Dependencies
+
+All instruments are written using `python3`, you need to install the following dependencies before you start working
+
+```bash
+pip3 install flask gevent tslearn
+pip3 install h5py tslearn matplotlib
+pip3 install PyVCF3
+```
+
+We have collected a large collection of signals based on the HGDP open database (link), 
+as well as a small demo collection of signals (link) based on 3 samples from GIAB (HG002, HG003, HG004). 
+The following shows instructions on how to deploy a small version of the database and how to create it yourself from open sources
+
 ## How to deploy a local version of the database
 
 Download compiled web-interface
@@ -14,15 +28,9 @@ wget https://swaveform.compbio.ru/supplement/_GIAB_Ashkenazim.zip
 unzip _GIAB_Ashkenazim.zip
 ```
 
-Dependencies
-```bash
-pip3 install flask gevent tslearn 
-```
-
 Usage:
 ```bash
-# Running the server on port 8888
-python3 server.py \
+server.py \
   db:[DB path name] \
   port:[server port, default: 9915] \
   dev:[dev-mode (app.run), default: false (WSGIServer)] \
@@ -36,7 +44,15 @@ python3 server.py db:_GIAB_Ashkenazim port:8888 dev:yes
 # Open http://127.0.0.1:8888/
 ```
 
+You can launch the web interface based on HGDP data (large) in the same way 
+by substituting the required data source into the `db:` parameter
+
+
 ## Run a search for motifs on the signal database
+
+We have two variants of the database built on the basis of GIAB. One, first `_GIAB_Ashkenazim`,
+contains found motifs. The second, `_GIAB_Ashkenazim_nomodel`, contains only signals and does not contain motifs.
+Using the second database, you can find motifs yourself using our instruments.
 
 ### 1. Download repository and database-without-motifs (_GIAB_Ashkenazim_nomodel.zip):
 
@@ -49,18 +65,21 @@ unzip _GIAB_Ashkenazim_nomodel.zip
 Start collecting statistics and building distributions for the Description page:
 
 ```bash
-pip3 install h5py tslearn matplotlib
-python3 ./tools/overview.py db:./_GIAB_Ashkenazim
+./tools/overview.py db:./_GIAB_Ashkenazim
 ```
 
 ### 2. Search for motifs
+
+The search for motifs goes in two stages:
+1. Clustering and searching for motifs for each cluster using a random subsample of signals (bootstrap).
+2. Combining the motifs found at the first stage
 
 To speed up the search for a motifs, you can conduct it on different workstations and combine the results at the end.
 Tool for clustering and searching for a motif in clusters: `./tools/Clusters_ADAKMS_bootstrap.py`
 
 Usage:
 ```text
-python3 ./tools/Clusters_ADAKMS_bootstrap.py \
+./tools/Clusters_ADAKMS_bootstrap.py \
   db:[DB path name] \
   name:[dataset name] \
   type:[SV type and side, ex: DEL_L] \
@@ -74,22 +93,32 @@ python3 ./tools/Clusters_ADAKMS_bootstrap.py \
 
 An example of searching for a motif for the Left deletion breakpoint (type:DEL_L):
 ```bash
-# Search (for each run, 800 random signals from the database will be selected)
-python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_Ashkenazim_nomodel \
+./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_Ashkenazim_nomodel \
   repeats:10 dataset:800 type:DEL_L name:GIAB
 # Time:   11 min. (663 sec.) 
 # Memory: 178MB
 # Result: _GIAB_Ashkenazim_nomodel/adakms/GIAB_DEL_L_s64-24_w32_d800_r10_s1337.json
 ```
 
+Memory and speed calculations are measured for running in a single thread on a device with the following specifications:
+
+```text
+Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+CPU(s):              32
+Thread(s) per core:  2
+Core(s) per socket:  8
+Model name:          Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz
+```
+
 ### 3. Merge
 
-For each bootstrap run, we get 2 or 1 cluster, for each cluster there are up to 5 most significant motives.
-We combine these results into one most significant motive `./tools/Clusters_ADAKMS_align.py`:
+For each bootstrap run, we get 2 or 1 cluster, for each cluster there are up to 5 most significant motifs.
+We combine these results into one most significant motif `./tools/Clusters_ADAKMS_align.py`:
 
 Usage:
 ```bash
-python3 ./tools/Clusters_ADAKMS_align.py \
+./tools/Clusters_ADAKMS_align.py \
   db:[DB path name] \
   prefix:[dataset name]
 ```
@@ -97,14 +126,14 @@ python3 ./tools/Clusters_ADAKMS_align.py \
 Example for DEL_L:
 ```bash
 # Merge. After this step, the found motifs will be automatically shown in the interface
-python3 ./tools/Clusters_ADAKMS_align.py db:_GIAB_Ashkenazim \
+./tools/Clusters_ADAKMS_align.py db:_GIAB_Ashkenazim \
   prefix:GIAB_DEL_L
 ```
 
 ### Run web-interface
 
 ```bash
-python3 server.py db:_GIAB_Ashkenazim port:8888 dev:yes
+server.py db:_GIAB_Ashkenazim port:8888 dev:yes
 # Open http://127.0.0.1:8888/
 ```
 
@@ -113,15 +142,26 @@ python3 server.py db:_GIAB_Ashkenazim port:8888 dev:yes
 ```bash
 tps='BND_L BND_R DEL_C DEL_L DEL_R DUP_C DUP_L DUP_R INS_C INV_C INV_L INV_R'
 for tp in $(echo $tps); do
-  python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_Ashkenazim \
+  ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_Ashkenazim \
     repeats:20 dataset:800 type:$tp name:GIAB
-  python3 ./tools/Clusters_ADAKMS_align.py db:_GIAB_Ashkenazim \
+  ./tools/Clusters_ADAKMS_align.py db:_GIAB_Ashkenazim \
     prefix:"GIAB_"$tp
 done
 ```
 
 
 ## How to build your own database from sequencing data
+
+
+### Prerequisites:
+
+[Mosdepth](https://github.com/brentp/mosdepth) (in addition to the others)
+
+Minimal hardware requirements  
+- CPU 1-core
+- RAM 2GB
+- Free disk space: 600GB
+
 
 To create a signal-database you will need:
 0. Repository
@@ -138,16 +178,15 @@ cd ./SWaveform
 
 ### 1. Generate coverage files (.bcov) from sequencing data
 
-Schema: (.bam|.cram) -> `mosdepth` -> (.per-base.bed.gz) -> `bed2cov` -> (.bcov)
+Dataflow: (.bam|.cram) -> mosdepth -> (.per-base.bed.gz) -> bed2cov -> (.bcov)
 
 Extracting depth-of-coverage (DOC) from .cram files is done using [mosdepth](https://github.com/brentp/mosdepth)  
 Example for HGDP samples collection:
 
 ```bash
-cd /projects/HGDP/cram/
 for crm in $(ls *.cram); do
   code=${crm/.cram/}
-  ~/mosdepth -t 24 -f /projects/HGDP/Homo_sapiens.GRCh38.dna.toplevel.fa "$code" "$crm"
+  ~/mosdepth -t 24 -f Homo_sapiens.GRCh38.dna.toplevel.fa "$code" "$crm"
 done;
 ```
 
@@ -178,7 +217,7 @@ Columns: "sample_accession sample population sex meancov"
 
 Usage:
 ```bash
-python3 ./tools/import_vcf.py \
+./tools/import_vcf.py \
   db:[DB path name] \
   vcf:[vcf or vcf.gz file] \
   meta:[metadata file] \
@@ -191,9 +230,8 @@ python3 ./tools/import_vcf.py \
 
 Example:
 ```bash
-pip3 install PyVCF3
 for vcf in /projects/HGDP/SV/*.vcf; do
-  python3 ./tools/import_vcf.py db:_HGDP name:HGDP vcf:$vcf meta:/projects/HGDP/HGDP.metadata
+  ./tools/import_vcf.py db:_HGDP name:HGDP vcf:$vcf meta:/projects/HGDP/HGDP.metadata
 done
 ```
 
@@ -202,7 +240,7 @@ Tool: `./tools/import_coverage.py`
 
 Usage:
 ```bash
-python3 ./tools/import_coverage.py \
+./tools/import_coverage.py \
   db:[DB directory] \
   path:[coverage directory] \
   name:[dataset name]
@@ -210,7 +248,7 @@ python3 ./tools/import_coverage.py \
 
 Example:
 ```bash
-python3 ./tools/import_coverage.py db:_HGDP name:HGDP path:/projects/HGDP/cram/
+./tools/import_coverage.py db:_HGDP name:HGDP path:/projects/HGDP/cram/
 ```
 
 
