@@ -28,7 +28,7 @@ class PlotPage extends React.Component {
             'karyotype': {},
             'chr': '', 'start': 0, 'end': 1, 'offset': 0,
             'data:signal': [], 'types': {},
-            'side': {'L': true, 'R': true, 'C': true},
+            'side': {'L': true, 'R': true, 'BP': true},
             'more': true,
             'windowWidth': window.innerWidth
         };
@@ -264,11 +264,16 @@ class PlotPage extends React.Component {
                   
                   <div className={'item'}>
                       <span className={'a-box t'}>
-                          <span className={'tag side-C'}>C</span>
+                          <span className={'tag side-BP'}>BP</span>
+                          <span className={'tag side-BP'}>SBP</span>
                           <span className={'tag side-L'}>L</span>
                           <span className={'tag side-R'}>R</span>
                       </span>
-                      Indicator of the side of the breakpoint. L – beginning (left); R – ending (right); C – center (for aberrations less than 32bp)
+                      Indicator of the side of the breakpoint.
+                      L – beginning (left breakpoint);
+                      R – ending (right breakpoint);
+                      BP – Breakpoint (where L = R);
+                      SBP – Special Breakpoint (a point in an arbitrary part of the signal)
                   </div>
     
                   <div className={'item'}>

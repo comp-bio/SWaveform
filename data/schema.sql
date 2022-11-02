@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "signal" (
   "start" integer NOT NULL, -- 'Signal start coordinate (-256bp from bp)',
   "end" integer NOT NULL, -- 'End of signal coordinate (+ 256bp from bp)',
   "type" text(128) NOT NULL, -- 'Structural variation Type',
-  "side" text(32) NOT NULL, -- 'Left, right or center breakpoint of the SV (L, R, C)',
+  "side" text(32) NOT NULL, -- 'Left, right or default breakpoint of the SV (L, R, BP)',
   "size" integer NOT NULL, -- 'SV size (Distance between breakpoints)',
   "genotype" integer NOT NULL, -- 'Genotype (1 for 1/0, 2 for 1/1)',
   "coverage_offset" integer NOT NULL, -- 'Coverage offset (for ext. binary file)',

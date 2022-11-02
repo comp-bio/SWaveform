@@ -64,4 +64,5 @@ int main(int argc, char *argv[])
 }
 
 // Build: gcc bed2cov/convert.c -std=c99 -m64 -O3 -o bed2cov/convert_$(uname)
+// Build: gcc bed2cov/convert.c -std=c99 -m64 -O3 -o bed2cov/bed2cov
 // Usage: cat file.bed | ./convert_Linux

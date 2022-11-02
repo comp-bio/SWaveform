@@ -1,36 +1,55 @@
 # SWaveform
 
-## Dependencies
 
-All instruments are written using `python3`, you need to install the following dependencies before you start working
+## About
+
+The repository contains a web interface for the signal database as well as a set of tools for creating a collection of signals from .bam and .vcf files.
+
+The resource encompasses depth of coverage (DOC) signals from two large-scale sequencing initiatives delivered by the Human Genome Diversity Project (HGDP)  [Bergstrom, Almarri] and Genome in a Bottle consortia (GIAB)[]. As the latter provides variant calls and regions for use in benchmarking and validating variant calling pipelines and contains a smaller number of individuals, we envision it to be a demo collection to deploy the resource locally and to test the accompanying toolset.
+
+The demo collection of DOC profiles contains the following samples:
+* GIAB Ashkenazy; database and motifs (HG002). [_GIAB_HG002.zip](https://swaveform.compbio.ru/supplement/_GIAB_HG002.zip)
+* GIAB Ashkenazy; database only, no motifs (HG002). [_GIAB_HG002_nomodel.zip](https://swaveform.compbio.ru/supplement/_GIAB_HG002_nomodel.zip)
+* HGDP dataset (911 samples). [_HGDP.zip](https://swaveform.compbio.ru/supplement/_HGDP.zip)
+* YRI, CHS and PUR family trio's children characterised in Chaisson et al (ref).
+
+Below are instructions on 1) how to deploy a demo version of the database and 2) how to create it yourself from open sourceshow to launch the web interface with our signal collections.
+
+
+## 1. Getting started. How to deploy a local version of the database
+
+1.1 Dependencies  
+All instruments are written using `python3`, you need to install the following dependencies before you start working:
 
 ```bash
-pip3 install flask gevent tslearn
-pip3 install h5py tslearn matplotlib
-pip3 install PyVCF3
+pip3 install flask tslearn gevent 
 ```
 
-We have collected a large collection of signals based on the HGDP open database (link), 
-as well as a small demo collection of signals (link) based on 3 samples from GIAB (HG002, HG003, HG004). 
-The following shows instructions on how to deploy a small version of the database and how to create it yourself from open sources
-
-## How to deploy a local version of the database
-
-Download compiled web-interface
+1.2 Download the precompiled web-interface
 ```bash
 wget https://swaveform.compbio.ru/supplement/swaveform-14-Oct-2022.zip
 unzip swaveform-14-Oct-2022.zip
 ```
 
-Download database and motifs
+1.3 Download signals and motifs
 ```bash
-wget https://swaveform.compbio.ru/supplement/_GIAB_Ashkenazim.zip
-unzip _GIAB_Ashkenazim.zip
+wget https://swaveform.compbio.ru/supplement/_GIAB_HG002.zip
+unzip _GIAB_HG002.zip
 ```
 
-Usage:
+1.4 Launch local web server with downloaded signal collection:
 ```bash
-server.py \
+python3 server.py db:_GIAB_HG002 port:8888 dev:yes
+```
+
+You're done. Now you can open your browser at [http://127.0.0.1:8888/](http://127.0.0.1:8888/)
+
+![](./supplement/webface.png)
+
+Detailed instructions for using the web server startup script:
+
+```bash
+python3 server.py \
   db:[DB path name] \
   port:[server port, default: 9915] \
   dev:[dev-mode (app.run), default: false (WSGIServer)] \
@@ -38,48 +57,46 @@ server.py \
   alphabet:[SAX-transform height for plots (alphabet size), default: 24]
 ```
 
-Example:
-```bash
-python3 server.py db:_GIAB_Ashkenazim port:8888 dev:yes
-# Open http://127.0.0.1:8888/
-```
-
-You can launch the web interface based on HGDP data (large) in the same way 
-by substituting the required data source into the `db:` parameter
-
-
-## Run a search for motifs on the signal database
-
-We have two variants of the database built on the basis of GIAB. One, first `_GIAB_Ashkenazim`,
-contains found motifs. The second, `_GIAB_Ashkenazim_nomodel`, contains only signals and does not contain motifs.
-Using the second database, you can find motifs yourself using our instruments.
-
-### 1. Download repository and database-without-motifs (_GIAB_Ashkenazim_nomodel.zip):
+!Note: You can launch the web interface based on HGDP data (large) in the same way by substituting the required data source into the `db:` parameter
 
 ```bash
-git clone git@github.com:latur/SWaveform.git && cd ./SWaveform
-wget https://swaveform.compbio.ru/supplement/_GIAB_Ashkenazim_nomodel.zip
-unzip _GIAB_Ashkenazim_nomodel.zip
+wget https://swaveform.compbio.ru/supplement/_HGDP.zip
+unzip _HGDP.zip
+python3 server.py db:_HGDP port:8888 dev:yes
 ```
 
-Start collecting statistics and building distributions for the Description page:
+
+## 2. Detailed documentation
+
+
+### 2.1 Motifs extraction
+
+> Dataflow: (collection) -> (collection + motifs)  
+> Hardware requirements: 500Mb disk space, 1GB RAM  
+> Enviroment: Python >= 3.8, Python libraries (flask gevent tslearn h5py tslearn matplotlib PyVCF3)
 
 ```bash
-./tools/overview.py db:./_GIAB_Ashkenazim
+pip3 install flask gevent tslearn h5py tslearn matplotlib PyVCF3
 ```
 
-### 2. Search for motifs
+We have developed two versions of the database built with the  GIAB project datasets. The ffirst one, namely, _GIAB_Ashkenazim, contains extracted motifs. The second version -, _GIAB_Ashkenazim_nomodel, contains only DOC signals and is intended primarily  for testing the motif extraction workflow using the provided instruments and tools. Therefore, you may skip.
 
-The search for motifs goes in two stages:
-1. Clustering and searching for motifs for each cluster using a random subsample of signals (bootstrap).
-2. Combining the motifs found at the first stage
+2.1.1 Download repository and database-without-motifs (**_GIAB_Ashkenazim_nomodel.zip**):
 
-To speed up the search for a motifs, you can conduct it on different workstations and combine the results at the end.
-Tool for clustering and searching for a motif in clusters: `./tools/Clusters_ADAKMS_bootstrap.py`
+```bash
+git clone https://github.com/latur/SWaveform.git && cd ./SWaveform
+wget https://swaveform.compbio.ru/supplement/_GIAB_HG002_nomodel.zip
+unzip _GIAB_HG002_nomodel.zip
+```
+
+2.1.2 Clustering of DOC profiles and motif extraction from the clusters with bootstrap
+
+To speed up the motifs discovery, as the process may be time and resourse consuming it is possible to run it on different workstations and combine the results at the end.
 
 Usage:
+
 ```text
-./tools/Clusters_ADAKMS_bootstrap.py \
+python3 ./tools/Clusters_ADAKMS_bootstrap.py \
   db:[DB path name] \
   name:[dataset name] \
   type:[SV type and side, ex: DEL_L] \
@@ -91,13 +108,38 @@ Usage:
   seed:[seed for K-means]
 ```
 
-An example of searching for a motif for the Left deletion breakpoint (type:DEL_L):
+An example of searching for a motif for the left deletion breakpoint (type:DEL side:L):
+
 ```bash
-./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_Ashkenazim_nomodel \
-  repeats:10 dataset:800 type:DEL_L name:GIAB
-# Time:   11 min. (663 sec.) 
-# Memory: 178MB
-# Result: _GIAB_Ashkenazim_nomodel/adakms/GIAB_DEL_L_s64-24_w32_d800_r10_s1337.json
+python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_HG002_nomodel repeats:20 dataset:800 type:DEL side:L name:GIAB &
+# Time:   40 min. (2422 sec.)
+# Memory: 567MB
+# Result: _GIAB_HG002_nomodel/adakms/GIAB_DEL_L_s64-24_w32_d800_r20_s1337.json
+```
+
+2.1.3 Combining the motifs found at the first stage
+
+Eeach bootstrap run generates one or two clusters, each cluster yields up to 5 most significant motifs. These are further merged into one most representative motif `./tools/Clusters_ADAKMS_align.py`:
+
+Usage:
+
+```text
+python3 ./tools/Clusters_ADAKMS_align.py \
+  db:[DB path name] \
+  prefix:[dataset name]_[motif type]
+```
+
+Example for search for motifs of all types for the GIAB_HG002-database:
+
+```bash
+date
+python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_HG002_nomodel repeats:10 dataset:600 type:DEL side:L name:GIAB
+python3 ./tools/Clusters_ADAKMS_align.py db:_GIAB_HG002_nomodel prefix:"GIAB_DEL_L"
+python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_HG002_nomodel repeats:10 dataset:600 type:DEL side:R name:GIAB
+python3 ./tools/Clusters_ADAKMS_align.py db:_GIAB_HG002_nomodel prefix:"GIAB_DEL_R"
+python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_HG002_nomodel repeats:10 dataset:600 type:INS side:BP name:GIAB
+python3 ./tools/Clusters_ADAKMS_align.py db:_GIAB_HG002_nomodel prefix:"GIAB_INS_BP"
+date
 ```
 
 Memory and speed calculations are measured for running in a single thread on a device with the following specifications:
@@ -111,136 +153,112 @@ Core(s) per socket:  8
 Model name:          Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz
 ```
 
-### 3. Merge
 
-For each bootstrap run, we get 2 or 1 cluster, for each cluster there are up to 5 most significant motifs.
-We combine these results into one most significant motif `./tools/Clusters_ADAKMS_align.py`:
+### 2.2 Building your own database for your sequencing project
 
-Usage:
-```bash
-./tools/Clusters_ADAKMS_align.py \
-  db:[DB path name] \
-  prefix:[dataset name]
-```
+!Note: Creating your own collection of signals requires a lot of disk space to store bam files. Each bam file can be up to 300gb
 
-Example for DEL_L:
-```bash
-# Merge. After this step, the found motifs will be automatically shown in the interface
-./tools/Clusters_ADAKMS_align.py db:_GIAB_Ashkenazim \
-  prefix:GIAB_DEL_L
-```
+Здесь уточнить, сколько именно потребуется для GIAB HG002
+++ Переписать примеры под конкретные файлы bam vcf
 
-### Run web-interface
+> Hardware requirements: 2GB disk space, 1GB RAM  
+> Enviroment: Python >= 3.8, Python libraries (PyVCF3)
 
-```bash
-server.py db:_GIAB_Ashkenazim port:8888 dev:yes
-# Open http://127.0.0.1:8888/
-```
-
-### Search for motifs of all types for the GIAB_Ashekenazi-database
-
-```bash
-tps='BND_L BND_R DEL_C DEL_L DEL_R DUP_C DUP_L DUP_R INS_C INV_C INV_L INV_R'
-for tp in $(echo $tps); do
-  ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_Ashkenazim \
-    repeats:20 dataset:800 type:$tp name:GIAB
-  ./tools/Clusters_ADAKMS_align.py db:_GIAB_Ashkenazim \
-    prefix:"GIAB_"$tp
-done
-```
+2.2.1 Generate coverage files (.bcov) from sequencing data
 
 
-## How to build your own database from sequencing data
+> Dataflow 1: (.bam or .cram) -> mosdepth -> (.per-base.bed.gz) -> bed2cov -> (.bcov)
 
+Extracting depth-of-coverage (DOC) from .cram files is done using [mosdepth](https://github.com/brentp/mosdepth)
 
-### Prerequisites:
-
-[Mosdepth](https://github.com/brentp/mosdepth) (in addition to the others)
-
-Minimal hardware requirements  
-- CPU 1-core
-- RAM 2GB
-- Free disk space: 600GB
-
-
-To create a signal-database you will need:
-0. Repository
-1. .bam or .cram sample files
-2. meta-file for matching directory names for each genome and sample names in VCF files
-3. .vcf files with structural variants
-
-### 0. Repository
-
-```bash
-git clone git@github.com:latur/SWaveform.git
-cd ./SWaveform
-```
-
-### 1. Generate coverage files (.bcov) from sequencing data
-
-Dataflow: (.bam|.cram) -> mosdepth -> (.per-base.bed.gz) -> bed2cov -> (.bcov)
-
-Extracting depth-of-coverage (DOC) from .cram files is done using [mosdepth](https://github.com/brentp/mosdepth)  
 Example for HGDP samples collection:
 
 ```bash
 for crm in $(ls *.cram); do
   code=${crm/.cram/}
-  ~/mosdepth -t 24 -f Homo_sapiens.GRCh38.dna.toplevel.fa "$code" "$crm"
+  mosdepth -t 24 -f Homo_sapiens.GRCh38.dna.toplevel.fa "$code" "$crm"
 done;
 ```
 
-As a result, bed files of coverage values for each sample will be created in the `/projects/HGDP/cram/` directory.
-These files need to be converted to .bcov format using a tool from our repository (`~/SWaveform/bed2cov/convert_Linux`).
-Example:
+As a result, for every sample BED files containing DOC are created in the current directory. These files should be further converted into .bcov format using a tool from our repository (~/SWaveform/bed2cov/bed2cov). Example:
 
 ```bash
-cd /projects/HGDP/cram/
 for crm in $(ls *.cram); do
   code=${crm/.cram/}
   mkdir -p $code && cd $code
   echo -e "\033[37m.bed -> .bcov $code [$(date)]\033[0m";
-  gzip -cd ../"$code".per-base.bed.gz | ~/SWaveform/bed2cov/convert_Linux
+  gzip -cd ../"$code".per-base.bed.gz | ./bed2cov/bed2cov
   cd ../
 done
 ```
 
-### 2. Meta file
+2.2.2 The .meta file
 
-The meta file is a table, it indicates which sample in .VCF corresponds to which DOC-file (.bcov):
-Columns: "sample_accession sample population sex meancov"  
-`sample_accession` — sample name in vcf file  
-`sample` is the name of the .bcov coverage data directory  
-`population` `sex` `meancov` — fields for the database
+The .meta file is a table which, contains .VCF to .BCOV file relationships i.e. indicates which sample corresponds to which DOC signal. Columns: `sample_accession sample population sex meancov`  
+sample_accession — sample name in vcf file  
+sample is the name of the .bcov coverage data directory  
+population sex meancov — fields for the database
 
-### 3. Import VCF files and create database (tool `./tools/import_vcf.py`):
+Example:
+
+```text
+sample_accession sample population sex meancov
+NA12878 HG001 Default F 272.02
+HG002 HG002 Ashkenazim M 53.27
+HG003 HG003 Ashkenazim M 45.94
+HG004 HG004 Ashkenazim F 52.54
+HG005 HG005 Chinese M 14.96
+HG006 HG006 Chinese M 17.26
+HG007 HG007 Chinese F 16.65
+```
+
+2.2.3. Import VCF files and create database (tools `./tools/import_vcf.py` `./tools/import_coverage.py`):
+
+> Dataflow 2: (.bcov + .meta + .vcf) -> (collection)
 
 Usage:
-```bash
-./tools/import_vcf.py \
+
+```text
+python3 ./tools/import_vcf.py \
   db:[DB path name] \
   vcf:[vcf or vcf.gz file] \
   meta:[metadata file] \
   name:[dataset file] \
-  center:[if SV size is less than specified, DO NOT keep `L` `R` ends but keep only `C` (32)] \
-  all:[if SV size is less than specified, keep both BND: `L` R and `C` (256)] \
   offset:[BND offset in bases (integer, >16, default: 256)] \
-  genome:[human genome version, default GRCh38]
+  genome:[human genome version, default GRCh38] \
+  special:[if SV is less than this parameter, store it as an additional
+    breakpoint with type `SBP`, default: 0*] \
+  spp:[number from 0 to 1. Specify the center of SV around which offset 
+    will be taken, default: 0.5*]
 ```
 
+**Special breakpoint (`special` & `spp`):**  
+
+If you want to save a signal around a small size SV to the database, you can
+use the `special` and `spp` options. All SVs greater than the `special`
+parameter will not be added to the database. `spp` is responsible for the
+position of the point around which offset will be taken. The point is
+calculated relative to the SV size: SBP = L + (R - L) * spp. For example,
+if you specify spp = 0.5, then for the deletion in coordinates 3000–3024,
+center 3012 and the signal from segment 3012±256 [2756–3268] will be stored
+in the database
+
 Example:
+
 ```bash
 for vcf in /projects/HGDP/SV/*.vcf; do
-  ./tools/import_vcf.py db:_HGDP name:HGDP vcf:$vcf meta:/projects/HGDP/HGDP.metadata
+  python3 ./tools/import_vcf.py db:_HGDP \
+   name:HGDP vcf:$vcf \
+   meta:HGDP/HGDP.metadata
 done
 ```
 
-After all VCF files have been imported, download the corresponding region coverage signals.
-Tool: `./tools/import_coverage.py`
+Once all VCF files have been imported, download the corresponding region coverage signals.
 
 Usage:
-```bash
-./tools/import_coverage.py \
+
+```text
+python3 ./tools/import_coverage.py \
   db:[DB directory] \
   path:[coverage directory] \
   name:[dataset name]
@@ -248,23 +266,25 @@ Usage:
 
 Example:
 ```bash
-./tools/import_coverage.py db:_HGDP name:HGDP path:/projects/HGDP/cram/
+python3 ./tools/import_coverage.py db:_HGDP name:HGDP path:HGDP/cram/
 ```
 
 
-## Interface
+### 2.3 Interface deployment (for JavaScript developers)
 
-To work on the interface, we used React. For development use hot-reload server:
+To work on the interface, we used React.
+For development use hot-reload server:
 
 ```bash
 yarn install #Once
 yarn server
 ```
 
-To build JS, use the command:
+To build JavaScript code, use the command:
 
 ```bash
 yarn build && yarn pub
 ```
 
 The interface ready for publishing will be compiled into an archive like this: `swaveform-$(date +%d-%b-%Y).zip`
+

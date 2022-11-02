@@ -45,6 +45,6 @@
     "server": "webpack serve --mode development --env development --hot --progress --inline --config webpack.config.js",
     "build": "rm -f build/main-* && NODE_ENV=production webpack --config webpack.config.js",
     "py": "python3 server.py",
-    "pub": "NAME=\"swaveform-$(date +%d-%b-%Y).zip\" && zip -x \"*/.*\" -r $NAME ./build server.py"
+    "pub": "NAME=\"swaveform-$(date +%d-%b-%Y).zip\" && zip -x \"*/.*\" -r $NAME ./build server.py && mv $NAME ./supplement"
   }
 }

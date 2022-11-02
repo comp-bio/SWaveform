@@ -265,7 +265,7 @@
 
       &.side-R { color: #080; }
       &.side-L { color: #f00; }
-      &.side-C { color: #009; }
+      &.side-BP { color: #009; }
 
       &.w66 {
         flex: 1 1 66.66%;
@@ -284,7 +284,7 @@
   .coverage {
     &.side-R { fill: rgba(#080, 0.2); stroke: #080; }
     &.side-L { fill: rgba(#f00, 0.2); stroke: #f00; }
-    &.side-C { fill: rgba(#009, 0.2); stroke: #009; }
+    &.side-BP { fill: rgba(#009, 0.2); stroke: #009; }
   }
 }
 
@@ -404,7 +404,7 @@
   &.mini { font-size: 11px; }
   &.side-R { box-shadow: inset 0 0 0 1px #080; background: rgba(#080, 0.1) }
   &.side-L { box-shadow: inset 0 0 0 1px #f00; background: rgba(#f00, 0.1) }
-  &.side-C { box-shadow: inset 0 0 0 1px #009; background: rgba(#009, 0.1) }
+  &.side-BP { box-shadow: inset 0 0 0 1px #009; background: rgba(#009, 0.1) }
 }
 
 .karyotype-svg {

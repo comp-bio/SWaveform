@@ -6,11 +6,13 @@ from vcf2score import Variants
 options = {
   'db': time.strftime('signal-%Y_%m_%d-%H_%M_%S'),
   'offset': 256,
-  'center': 32,
-  'all': 256,
+  'special': 0,
+  'spp': 0,
   'genome': 'GRCh38',
   'sample': None,
-  'vcf': '', 'meta':'', 'name':'TEST'
+  'vcf': '',
+  'meta': '',
+  'name':'TEST'
 }
 for par in sys.argv[1:]:
     k, v = (par + ':').split(':')[0:2]
@@ -25,11 +27,24 @@ if len(options['vcf']) == 0 or len(options['meta']) == 0:
     echo('    vcf:[vcf or vcf.gz file] \\\n')
     echo('    meta:[metadata file] \\\n')
     echo('    name:[dataset file] \\\n')
-    echo('    center:[if SV size is less than specified, DO NOT keep `L` `R` ends but keep only `C` (32)] \\\n')
-    echo('    all:[if SV size is less than specified, keep both BND: `L` R and `C` (256)] \\\n')
     echo('    offset:[BND offset in bases (integer, >16, default: 256)] \\\n')
-    echo('    genome:[human genome version, default GRCh38]\n')
+    echo('    genome:[human genome version, default GRCh38] \\\n')
+    echo('    special:[if SV is less than this parameter, store it as an additional\n')
+    echo('      breakpoint with type `SBP`, default: 0*] \\\n')
+    echo('    spp:[number from 0 to 1. Specify the center of SV around which offset \n')
+    echo('      will be taken, default: 0.5*]\n')
+    echo('\n')
+    echo('Special breakpoint (`special` & `spp`):\n')
+    echo('  If you want to save a signal around a small size SV to the database, you can \n')
+    echo('  use the `special` and `spp` options. All SVs greater than the `special` \n')
+    echo('  parameter will not be added to the database. `spp` is responsible for the \n')
+    echo('  position of the point around which offset will be taken. The point is \n')
+    echo('  calculated relative to the SV size: SBP = L + (R - L) * spp. For example, \n')
+    echo('  if you specify spp = 0.5, then for the deletion in coordinates 3000–3024, \n')
+    echo('  center 3012 and the signal from segment 3012±256 [2756–3268] will be stored \n')
+    echo('  in the database\n')
     sys.exit(1)
+
 
 # --------------------------------------------------------------------------- #
 # Init DB
@@ -55,7 +70,10 @@ for line in metadata:
     samples[assoc['sample_accession']] = assoc
 
 samples_not_found = {}
-offset, m_center, m_all = (max(int(options['offset']), 16), max(int(options['center']), 1), max(int(options['all']), 1))
+offset = max(int(options['offset']), 16)
+
+special = max(int(options['special']), 0)
+spp = min(1, max(float(options['spp']), 0))
 
 # Variants
 signals = []
@@ -115,12 +133,14 @@ for chr, L, R, sv_type, rec in reader.info():
             counts[sv_type] = 0
 
         counts[sv_type] += 1
-        if R - L <= m_all:
-            C = round(R - L / 2)
-            signals.append((None, target_id, chr, C - offset, C + offset - 1, sv_type, 'C', R - L, gt, ''))
-        if R - L > m_center:
+        if R == L:
+            signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'BP', L, gt, ''))
+        else:
             signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'L', R - L, gt, ''))
             signals.append((None, target_id, chr, R - offset, R + offset - 1, sv_type, 'R', R - L, gt, ''))
+        if R - L < special:
+            SBP = L + int((R - L) * spp)
+            signals.append((None, target_id, chr, SBP - offset, SBP + offset - 1, sv_type, 'SBP', SBP, gt, ''))
 
 cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?,?)", signals)
 con.commit()

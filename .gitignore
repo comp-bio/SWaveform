@@ -10,6 +10,7 @@ build/models
 yarn.lock
 *.db
 upload.sh
+_*
 __pycache__
 .ipynb_checkpoints
 drafts

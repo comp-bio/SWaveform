@@ -10,11 +10,11 @@ import random, json, warnings
 
 # --------------------------------------------------------------------------- #
 start_time = time.time()
-options = {'db': '', 'name': '', 'type': '', 'sax': 64, 'alphabet': 24, 'window': 32, 'dataset': 400, 'repeats': 20, 'seed': 1337}
+options = {'db': '', 'name': '', 'type': '', 'side': 'BP', 'sax': 64, 'alphabet': 24, 'window': 32, 'dataset': 400, 'repeats': 20, 'seed': 1337}
 for par in sys.argv[1:]:
     k, v = (par + ':').split(':')[0:2]
     if k in options:
-        options[k] = v if k in ['db', 'type', 'name'] else int(v)
+        options[k] = v if k in ['db', 'type', 'side', 'name'] else int(v)
 
 db = f"{options['db']}/index.db"
 bc = f"{options['db']}/storage.bcov"
@@ -28,7 +28,8 @@ def usage():
     echo('  python3 %s \\\n' % sys.argv[0])
     echo('    db:[DB path name] \\\n')
     echo('    name:[dataset name] \\\n')
-    echo('    type:[SV type and side, ex: DEL_L] \\\n')
+    echo('    type:[SV type. ex: DEL] \\\n')
+    echo('    side:[SV side. L, R or BP] \\\n')
     echo('    sax:[SAX-transform width, default: 64] \\\n')
     echo('    alphabet:[SAX-transform height (alphabet size), default: 24] \\\n')
     echo('    window:[motif width, default: 32] \\\n')
@@ -51,9 +52,15 @@ if options['type'] == '':
         "LEFT JOIN `target` as t ON s.target_id = t.id "
         "GROUP BY t.dataset, s.type, s.side")
 
-    echo(f"Types for {options['db']}:\n")
+    names = {}
     for name, tp, side in cur.fetchall():
-        echo(f"  name:{name} type:{tp}_{side}\n")
+        if name not in names: names[name] = []
+        names[name].append([tp, side])
+    echo(f"Types for {options['db']}:\n")
+    for name in names:
+        echo(f"  name:{name}\n")
+        for tp, side in names[name]:
+            echo(f"    type:{tp} side:{side}\n")
     echo('\n')
     usage()
 
@@ -73,10 +80,9 @@ INF = 999999
 CACHE = {}
 
 def read_random(count=100):
-    tp, side = options['type'].split('_')[0:2]
     cur.execute("SELECT s.coverage_offset, s.start, s.end FROM `signal` as s "
         "LEFT JOIN `target` as t ON s.target_id = t.id "
-        f"WHERE t.dataset = '{options['name']}' and s.type = '{tp}' and s.side = '{side}' "
+        f"WHERE t.dataset = '{options['name']}' and s.type = '{options['type']}' and s.side = '{options['side']}' "
         f"ORDER BY random() LIMIT {count}")
     signals = []
     for pos, l, r in cur.fetchall():
@@ -236,6 +242,9 @@ window_step = max(1, int(options['window']/8))
 runs = []
 for rep in range(0, options['repeats']):
     data = np.array(read_random(options['dataset']))
+    if (len(data) == 0):
+        echo(f"[!] No coverage data found for: {options['type']}\n")
+        continue
     scld = TimeSeriesScalerMeanVariance().fit_transform([compress(sig, 8) for sig in data])
 
     model = TimeSeriesKMeans(n_clusters=2, n_init=1, metric="dtw", random_state=options['seed'], n_jobs=32)
@@ -265,7 +274,7 @@ for rep in range(0, options['repeats']):
 
 # Export
 if not os.path.exists(f"{options['db']}/adakms"): os.makedirs(f"{options['db']}/adakms")
-name = options['name'] + "_" + options['type']
+name = "_".join([options['name'], options['type'], options['side']])
 out = f"{options['db']}/adakms/{name}_s{options['sax']}-{options['alphabet']}_w{options['window']}_d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json"
 with open(out, "w") as f:
     json.dump(runs, f)

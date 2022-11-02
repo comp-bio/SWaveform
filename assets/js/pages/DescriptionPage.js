@@ -43,13 +43,13 @@ class DescriptionPage extends React.Component {
                                 <table>
                                     <thead><tr><th>Type of SV &rarr;</th>{Object.keys(d.types).map(type => <th key={type}>{type}</th>)}</tr></thead>
                                     <tbody>
-                                    {['Left', 'Right', 'Center'].map(k =>
+                                    {[['Left', 'L'], ['Right', 'R'], ['BP', 'BP']].map(k =>
                                         <tr key={k}>
-                                            <td><span className={`tag side-${k[0]}`}>{k[0]}</span> {k}:</td>
+                                            <td><span className={`tag side-${k[1]}`}>{k[1]}</span> {k[0]}:</td>
                                             {Object.keys(d.types).map(type => {
                                                 let s = 0;
                                                 Object.keys(d.types[type]).map(p => {
-                                                    if (d.stat[p][type][k[0]]) s += d.stat[p][type][k[0]].count;
+                                                    if (d.stat[p][type][k[1]]) s += d.stat[p][type][k[1]].count;
                                                 })
                                                 return <td key={type}>{s}</td>;
                                             })}
