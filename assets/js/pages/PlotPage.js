@@ -261,21 +261,25 @@ class PlotPage extends React.Component {
                           {[...Array(5)].map((e, i) => <span className={'sax-ex'} key={i} />)}
                       </span> Coverage signal, using SAX transformation (segments=64, alphabet=32)
                   </div>
-                  
+
                   <div className={'item'}>
                       <span className={'a-box t'}>
                           <span className={'tag side-BP'}>BP</span>
                           <span className={'tag side-BP'}>SBP</span>
+                      </span>
+                      BP – Breakpoint (where L = R);
+                      SBP – Special Breakpoint (a point in an arbitrary part of the signal)
+                  </div>
+                  <div className={'item'}>
+                      <span className={'a-box t'}>
                           <span className={'tag side-L'}>L</span>
                           <span className={'tag side-R'}>R</span>
                       </span>
                       Indicator of the side of the breakpoint.
-                      L – beginning (left breakpoint);
-                      R – ending (right breakpoint);
-                      BP – Breakpoint (where L = R);
-                      SBP – Special Breakpoint (a point in an arbitrary part of the signal)
+                      L – beginning (Left breakpoint);
+                      R – ending (Right breakpoint);
                   </div>
-    
+
                   <div className={'item'}>
                       <span className={'a-box'}><span className={'tag'}>ERS1063416</span></span> The sample code from which the signal was extracted
                   </div>

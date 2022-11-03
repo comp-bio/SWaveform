@@ -8,9 +8,9 @@ The repository contains a web interface for the signal database as well as a set
 The resource encompasses depth of coverage (DOC) signals from two large-scale sequencing initiatives delivered by the Human Genome Diversity Project (HGDP)  [Bergstrom, Almarri] and Genome in a Bottle consortia (GIAB)[]. As the latter provides variant calls and regions for use in benchmarking and validating variant calling pipelines and contains a smaller number of individuals, we envision it to be a demo collection to deploy the resource locally and to test the accompanying toolset.
 
 The demo collection of DOC profiles contains the following samples:
-* GIAB Ashkenazy; database and motifs (HG002). [_GIAB_HG002.zip](https://swaveform.compbio.ru/supplement/_GIAB_HG002.zip)
-* GIAB Ashkenazy; database only, no motifs (HG002). [_GIAB_HG002_nomodel.zip](https://swaveform.compbio.ru/supplement/_GIAB_HG002_nomodel.zip)
-* HGDP dataset (911 samples). [_HGDP.zip](https://swaveform.compbio.ru/supplement/_HGDP.zip)
+* GIAB Ashkenazy; database and motifs (HG002). [_GIAB_HG002.zip (40M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002.zip)
+* GIAB Ashkenazy; database only, no motifs (HG002). [_GIAB_HG002_nomodel.zip (23M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002_nomodel.zip)
+* HGDP dataset (911 samples). [_HGDP.zip (3.2G)](https://swaveform.compbio.ru/supplement/_HGDP.zip)
 * YRI, CHS and PUR family trio's children characterised in Chaisson et al (ref).
 
 Below are instructions on 1) how to deploy a demo version of the database and 2) how to create it yourself from open sourceshow to launch the web interface with our signal collections.
@@ -27,8 +27,8 @@ pip3 install flask tslearn gevent
 
 1.2 Download the precompiled web-interface
 ```bash
-wget https://swaveform.compbio.ru/supplement/swaveform-14-Oct-2022.zip
-unzip swaveform-14-Oct-2022.zip
+wget https://swaveform.compbio.ru/supplement/swaveform-02-Nov-2022.zip
+unzip swaveform-02-Nov-2022.zip
 ```
 
 1.3 Download signals and motifs
@@ -48,7 +48,7 @@ You're done. Now you can open your browser at [http://127.0.0.1:8888/](http://12
 
 Detailed instructions for using the web server startup script:
 
-```bash
+```text
 python3 server.py \
   db:[DB path name] \
   port:[server port, default: 9915] \
@@ -132,14 +132,23 @@ python3 ./tools/Clusters_ADAKMS_align.py \
 Example for search for motifs of all types for the GIAB_HG002-database:
 
 ```bash
-date
 python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_HG002_nomodel repeats:10 dataset:600 type:DEL side:L name:GIAB
 python3 ./tools/Clusters_ADAKMS_align.py db:_GIAB_HG002_nomodel prefix:"GIAB_DEL_L"
+# Time:   10 min. (607 sec.)                                                                                                                                      
+# Memory: 168MB                                                                                                                                                   
+# Result: _GIAB_HG002_nomodel/adakms/GIAB_DEL_L_s64-24_w32_d600_r10_s1337.json  
+
 python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_HG002_nomodel repeats:10 dataset:600 type:DEL side:R name:GIAB
 python3 ./tools/Clusters_ADAKMS_align.py db:_GIAB_HG002_nomodel prefix:"GIAB_DEL_R"
+# Time:   9 min. (591 sec.)                                                                                                                                       
+# Memory: 169MB                                                                                                                                                   
+# Result: _GIAB_HG002_nomodel/adakms/GIAB_DEL_R_s64-24_w32_d600_r10_s1337.json   
+
 python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_HG002_nomodel repeats:10 dataset:600 type:INS side:BP name:GIAB
 python3 ./tools/Clusters_ADAKMS_align.py db:_GIAB_HG002_nomodel prefix:"GIAB_INS_BP"
-date
+# Time:   18 min. (1095 sec.)
+# Memory: 344MB
+# Result: _GIAB_HG002_nomodel/adakms/GIAB_INS_BP_s64-24_w32_d600_r10_s1337.json
 ```
 
 Memory and speed calculations are measured for running in a single thread on a device with the following specifications:
@@ -157,9 +166,6 @@ Model name:          Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz
 ### 2.2 Building your own database for your sequencing project
 
 !Note: Creating your own collection of signals requires a lot of disk space to store bam files. Each bam file can be up to 300gb
-
-Здесь уточнить, сколько именно потребуется для GIAB HG002
-++ Переписать примеры под конкретные файлы bam vcf
 
 > Hardware requirements: 2GB disk space, 1GB RAM  
 > Enviroment: Python >= 3.8, Python libraries (PyVCF3)
@@ -194,10 +200,11 @@ done
 
 2.2.2 The .meta file
 
-The .meta file is a table which, contains .VCF to .BCOV file relationships i.e. indicates which sample corresponds to which DOC signal. Columns: `sample_accession sample population sex meancov`  
-sample_accession — sample name in vcf file  
-sample is the name of the .bcov coverage data directory  
-population sex meancov — fields for the database
+The .meta file is a table which, contains .VCF to .BCOV file relationships i.e. indicates which sample corresponds to which DOC signal.  
+Columns: `sample_accession` `sample` `population` `sex` `meancov`  
+`sample_accession` — sample name in vcf file  
+`sample` is the name of the .bcov coverage data directory  
+`population` `sex` `meancov` — fields for the database
 
 Example:
 
@@ -287,4 +294,3 @@ yarn build && yarn pub
 ```
 
 The interface ready for publishing will be compiled into an archive like this: `swaveform-$(date +%d-%b-%Y).zip`
-
