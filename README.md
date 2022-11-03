@@ -244,10 +244,10 @@ python3 ./tools/import_vcf.py \
 If you want to save a signal around a small size SV to the database, you can
 use the `special` and `spp` options. All SVs greater than the `special`
 parameter will not be added to the database. `spp` is responsible for the
-position of the point around which offset will be taken. The point is
-calculated relative to the SV size: SBP = L + (R - L) * spp. For example,
-if you specify spp = 0.5, then for the deletion in coordinates 3000–3024,
-center 3012 and the signal from segment 3012±256 [2756–3268] will be stored
+position of the point around which `offset` will be taken. The point is
+calculated relative to the SV size: `SBP = L + (R - L) * spp`. For example,
+if you specify `spp` = 0.5, then for the deletion in coordinates 3000–3024,
+center is 3012. The signal from segment 3012±256 [2756–3268] will be stored
 in the database
 
 Example:
