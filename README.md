@@ -176,8 +176,10 @@ Model name:          Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz
 > Dataflow 1: (.bam or .cram) -> mosdepth -> (.per-base.bed.gz) -> bed2cov -> (.bcov)
 
 Extracting depth-of-coverage (DOC) from .cram files is done using [mosdepth](https://github.com/brentp/mosdepth)
+To extract DOC values from .cram files you need a reference genome:
+http://ftp.ensembl.org/pub/current_fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.toplevel.fa.gz
 
-Example for HGDP samples collection:
+Example:
 
 ```bash
 for crm in $(ls *.cram); do
@@ -218,6 +220,26 @@ HG005 HG005 Chinese M 14.96
 HG006 HG006 Chinese M 17.26
 HG007 HG007 Chinese F 16.65
 ```
+
+```
+┌─────────────────┬───────┬───────────┬────┬────────┐
+│sample_accession │sample │population │sex │meancov │
+├─────────────────┼───────┼───────────┼────┼────────┤
+│NA12878          │HG002  │Ashkenazim │F   │272.02  │
+└─┬───────────────┴─┬─────┴─┬─────────┴────┴─┬──────┘
+  │                 │       │                │
+  ▼                 │       ▼                │
+ Sample name        │      Population        │
+ from .vcf file     │      name (any string) └────────┐
+                    ▼                                 │
+ Directory name with depth-of-coverage (DOC) values.  │
+ For example, DOC values for NA12878 are located in   │
+ directory HG002: /path-to-bcov/HG002/chr{1..22}.bcov │
+                                                      │
+ Mean coverage for the genome. The value is in file ◄─┘
+ *.mosdepth.summary.txt, line:total
+```
+
 
 2.2.3. Import VCF files and create database (tools `./tools/import_vcf.py` `./tools/import_coverage.py`):
 
