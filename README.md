@@ -13,7 +13,7 @@ The demo collection of DOC profiles contains the following samples:
 * HGDP dataset (911 samples). [_HGDP.zip (3.2G)](https://swaveform.compbio.ru/supplement/_HGDP.zip)
 * YRI, CHS and PUR family trio's children characterized in Chaisson et al [Chaisson, Mark J P et al. “Multi-platform discovery of haplotype-resolved structural variation in human genomes.” Nature communications vol. 10,1 1784. 16 Apr. 2019].
 
-Below are instructions on 1) how to deploy a demo version of the database and 2) how to create it yourself from open sourceshow to launch the web interface with our signal collections.
+Below are instructions on 1) how to deploy a demo version of the database and 2) how to create it yourself from open source show to launch the web interface with our signal collections.
 
 
 ## 1. Getting started. How to deploy a local version of the database
@@ -73,13 +73,13 @@ python3 server.py db:_HGDP port:8888 dev:yes
 
 > Dataflow: (collection) -> (collection + motifs)  
 > Hardware requirements: 500Mb disk space, 1GB RAM  
-> Enviroment: Python >= 3.8, Python libraries (flask gevent tslearn h5py tslearn matplotlib PyVCF3)
+> Environment: Python >= 3.8, Python libraries (flask gevent tslearn h5py tslearn matplotlib PyVCF3)
 
 ```bash
 pip3 install flask gevent tslearn h5py tslearn matplotlib PyVCF3
 ```
 
-We have developed two versions of the database built with the  GIAB project datasets. The ffirst one, namely, _GIAB_Ashkenazim, contains extracted motifs. The second version -, _GIAB_Ashkenazim_nomodel, contains only DOC signals and is intended primarily  for testing the motif extraction workflow using the provided instruments and tools. Therefore, you may skip.
+We have developed two versions of the database built with the  GIAB project datasets. The first one, namely, _GIAB_Ashkenazim, contains extracted motifs. The second version -, _GIAB_Ashkenazim_nomodel, contains only DOC signals and is intended primarily  for testing the motif extraction workflow using the provided instruments and tools. Therefore, you may skip.
 
 2.1.1 Download repository and database-without-motifs (**_GIAB_Ashkenazim_nomodel.zip**):
 
@@ -91,7 +91,7 @@ unzip _GIAB_HG002_nomodel.zip
 
 2.1.2 Clustering of DOC profiles and motif extraction from the clusters with bootstrap
 
-To speed up the motifs discovery, as the process may be time and resourse consuming it is possible to run it on different workstations and combine the results at the end.
+To speed up the motifs discovery, as the process may be time and resource consuming it is possible to run it on different workstations and combine the results at the end.
 
 Usage:
 
@@ -119,7 +119,7 @@ python3 ./tools/Clusters_ADAKMS_bootstrap.py db:_GIAB_HG002_nomodel repeats:20 d
 
 2.1.3 Combining the motifs found at the first stage
 
-Eeach bootstrap run generates one or two clusters, each cluster yields up to 5 most significant motifs. These are further merged into one most representative motif `./tools/Clusters_ADAKMS_align.py`:
+Each bootstrap run generates one or two clusters, each cluster yields up to 5 most significant motifs. These are further merged into one most representative motif `./tools/Clusters_ADAKMS_align.py`:
 
 Usage:
 
@@ -168,7 +168,7 @@ Model name:          Intel(R) Xeon(R) CPU E5-2640 v3 @ 2.60GHz
 !Note: Creating your own collection of signals requires a lot of disk space to store bam files. Each bam file can be up to 300gb
 
 > Hardware requirements: 2GB disk space, 1GB RAM  
-> Enviroment: Python >= 3.8, Python libraries (PyVCF3)
+> Environment: Python >= 3.8, Python libraries (PyVCF3)
 
 2.2.1 Generate coverage files (.bcov) from sequencing data
 
@@ -202,7 +202,7 @@ done
 
 2.2.2 The .meta file
 
-The .meta file is a table which, contains .VCF to .BCOV file relationships i.e. indicates which sample corresponds to which DOC signal.  
+The .meta file is a table which contains .VCF to .BCOV file relationships i.e. indicates which sample corresponds to which DOC signal.  
 Columns: `sample_accession` `sample` `population` `sex` `meancov`  
 `sample_accession` — sample name in vcf file  
 `sample` is the name of the .bcov coverage data directory  
@@ -261,7 +261,7 @@ python3 ./tools/import_vcf.py \
     will be taken, default: 0.5*]
 ```
 
-**Special breakpoint (`special` & `spp`):**  
+**Special breakpoint (`special` & `spp`):**
 
 If you want to save a signal around a small size SV to the database, you can
 use the `special` and `spp` options. All SVs greater than the `special`
