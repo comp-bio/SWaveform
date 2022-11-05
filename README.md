@@ -27,8 +27,8 @@ pip3 install flask tslearn gevent
 
 1.2 Download the precompiled web-interface
 ```bash
-wget https://swaveform.compbio.ru/supplement/swaveform-02-Nov-2022.zip
-unzip swaveform-02-Nov-2022.zip
+wget https://swaveform.compbio.ru/supplement/swaveform-05-Nov-2022.zip
+unzip swaveform-05-Nov-2022.zip
 ```
 
 1.3 Download signals and motifs
@@ -39,7 +39,7 @@ unzip _GIAB_HG002.zip
 
 1.4 Launch local web server with downloaded signal collection:
 ```bash
-python3 server.py db:_GIAB_HG002 port:8888 dev:yes
+python3 server.py db:./_GIAB_HG002 port:8888 dev:yes
 ```
 
 You're done. Now you can open your browser at [http://127.0.0.1:8888/](http://127.0.0.1:8888/)

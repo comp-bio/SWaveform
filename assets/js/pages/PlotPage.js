@@ -133,6 +133,65 @@ class PlotPage extends React.Component {
             this.loader.get();
         });
     }
+
+    renderControls() {
+        if (!this.state.overview) {
+            return <div className={'signals'}><div className={'placeholder'}>Loading...</div></div>;
+        }
+        return (
+            <>
+                <div className={'controls'}>
+                    <div className={'group filters'}>
+                        <span className={'label'}>Dataset:</span>
+                        <select
+                            value={this.state['dataset']} className={'selector button'}
+                            onChange={(e) => this.selectDataset(e.target.value)}>
+                            {this.state.overview ? (
+                                Object.keys(this.state.overview['ds']).map(k => <option key={k} value={k}>{k} ({this.state.overview['ds'][k]['genome']})</option>)
+                            ) : ''}
+                        </select>
+                    </div>
+                    {this.state['populations'] ? (
+                        <div className={'group filters'}>
+                            <span className={'label'}>Filter by population:</span>
+                            <select
+                                value={this.state['population']} className={'selector button'}
+                                onChange={(e) => this.setState({'population': e.target.value}, () => this.loader.get())}>
+                                {this.state['populations'].map(k => <option key={k} value={k}>{k || 'All'}</option>)}
+                            </select>
+                        </div>
+                    ) : ''}
+                    <div className={'group filters'}>
+                        <span className={'label'}>Filter by type:</span>
+                        <div>{Object.keys(this.state['types']).map(name => this.checkbox(name, 'types', this.state.type_color))}</div>
+                    </div>
+                    <div className={'group filters'}>
+                        <span className={'label'}>Filter by type:</span>
+                        <div>{Object.keys(this.state['side']).map(name => this.checkbox(name, 'side', side_color))}</div>
+                    </div>
+                </div>
+                <div className={'controls'}>
+                    <div className={'group'}>
+                        <span className={'label'}>Chromosome:</span>
+                        <select
+                            value={this.state['chr']} className={'selector button'}
+                            onChange={(e) => this.selectChr(e.target.value)}>
+                            {Object.keys(this.state['karyotype'] || {}).map(k => <option key={k} value={k}>Chr {k}</option>)}
+                        </select>
+                    </div>
+                    <div className={'group'}>
+                        <span className={'label'}>Start:</span>
+                        {this.renderPosition('start')}
+                    </div>
+                    <div className={'group'}>
+                        <span className={'label'}>End:</span>
+                        {this.renderPosition('end')}
+                    </div>
+                </div>
+                <div className={'karyotype-box'} id={"gmap"} />
+            </>
+        );
+    }
     
     renderResult() {
         let items = [];
@@ -175,8 +234,12 @@ class PlotPage extends React.Component {
         if (items.length > 0) {
             return <>{items}</>;
         }
-        
-        return (<div className={'placeholder'}>No coverage signals loaded for this region</div>)
+
+        if (this.state.overview) {
+            return (<div className={'placeholder'}>No coverage signals loaded for this region</div>)
+        }
+
+        return '';
     }
     
     checkbox(name, key, color) {
@@ -191,56 +254,7 @@ class PlotPage extends React.Component {
     render() {
         return (
           <div className={'part'}>
-              <div className={'controls'}>
-                  <div className={'group filters'}>
-                      <span className={'label'}>Dataset:</span>
-                      <select
-                        value={this.state['dataset']} className={'selector button'}
-                        onChange={(e) => this.selectDataset(e.target.value)}>
-                          {this.state.overview ? (
-                              Object.keys(this.state.overview['ds']).map(k => <option key={k} value={k}>{k} ({this.state.overview['ds'][k]['genome']})</option>)
-                          ) : ''}
-                      </select>
-                  </div>
-                  {this.state['populations'] ? (
-                    <div className={'group filters'}>
-                        <span className={'label'}>Filter by population:</span>
-                        <select
-                          value={this.state['population']} className={'selector button'}
-                          onChange={(e) => this.setState({'population': e.target.value}, () => this.loader.get())}>
-                            {this.state['populations'].map(k => <option key={k} value={k}>{k || 'All'}</option>)}
-                        </select>
-                    </div>
-                  ) : ''}
-                  <div className={'group filters'}>
-                      <span className={'label'}>Filter by type:</span>
-                      <div>{Object.keys(this.state['types']).map(name => this.checkbox(name, 'types', this.state.type_color))}</div>
-                  </div>
-                  <div className={'group filters'}>
-                      <span className={'label'}>Filter by type:</span>
-                      <div>{Object.keys(this.state['side']).map(name => this.checkbox(name, 'side', side_color))}</div>
-                  </div>
-              </div>
-              <div className={'controls'}>
-                  <div className={'group'}>
-                      <span className={'label'}>Chromosome:</span>
-                      <select
-                        value={this.state['chr']} className={'selector button'}
-                        onChange={(e) => this.selectChr(e.target.value)}>
-                          {Object.keys(this.state['karyotype'] || {}).map(k => <option key={k} value={k}>Chr {k}</option>)}
-                      </select>
-                  </div>
-                  <div className={'group'}>
-                      <span className={'label'}>Start:</span>
-                      {this.renderPosition('start')}
-                  </div>
-                  <div className={'group'}>
-                      <span className={'label'}>End:</span>
-                      {this.renderPosition('end')}
-                  </div>
-              </div>
-              <div className={'karyotype-box'} id={"gmap"} />
-              
+              {this.renderControls()}
               <div className={'annotation'}>
                   <div className={'item'}>
                       <span className={'a-box'}><i className={'vl'}></i></span> Aberratration point (middle of the signal)

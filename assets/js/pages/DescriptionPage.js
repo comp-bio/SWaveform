@@ -163,7 +163,7 @@ class DescriptionPage extends React.Component {
 
                 <h2 className="h2">Statistics</h2>
                 <div className={'part stat'}>
-                    {(this.state.overview ? this.renderOverview() : '')}
+                    {(this.state.overview ? this.renderOverview() : 'Loading...')}
                 </div>
             </div>
         );

@@ -56,7 +56,7 @@ class ModelsPage extends React.Component {
 
     gridPlot(code, cls) {
         const C = this.state[`src:detail_${code}.${cls}.json`] || null;
-        console.log('>>>', this.state);
+        // console.log('>>>', this.state);
         if (C === 'loading') return (
             <article className={'cluster empty'} key={code + cls}>
                 [loading]
