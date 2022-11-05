@@ -5,13 +5,13 @@
 
 The repository contains a web interface for the signal database as well as a set of tools for creating a collection of signals from .bam and .vcf files.
 
-The resource encompasses depth of coverage (DOC) signals from two large-scale sequencing initiatives delivered by the Human Genome Diversity Project (HGDP)  [Bergstrom, Almarri] and Genome in a Bottle consortia (GIAB)[]. As the latter provides variant calls and regions for use in benchmarking and validating variant calling pipelines and contains a smaller number of individuals, we envision it to be a demo collection to deploy the resource locally and to test the accompanying toolset.
+The resource encompasses depth of coverage (DOC) signals from two large-scale sequencing initiatives delivered by the Human Genome Diversity Project (HGDP)  [Bergström, Anders et al. “Insights into human genetic variation and population history from 929 diverse genomes.” Science (New York, N.Y.) vol. 367,6484 (2020)] and Genome in a Bottle consortia (GIAB)[Zook, Justin M et al. “Extensive sequencing of seven human genomes to characterize benchmark reference materials.” Scientific data vol. 3 160025. 7 Jun. 2016]. As the latter provides variant calls and regions for use in benchmarking and validating variant calling pipelines and contains a smaller number of individuals, we envision it to be a demo collection to deploy the resource locally and to test the accompanying toolset.
 
 The demo collection of DOC profiles contains the following samples:
 * GIAB Ashkenazy; database and motifs (HG002). [_GIAB_HG002.zip (40M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002.zip)
 * GIAB Ashkenazy; database only, no motifs (HG002). [_GIAB_HG002_nomodel.zip (23M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002_nomodel.zip)
 * HGDP dataset (911 samples). [_HGDP.zip (3.2G)](https://swaveform.compbio.ru/supplement/_HGDP.zip)
-* YRI, CHS and PUR family trio's children characterised in Chaisson et al (ref).
+* YRI, CHS and PUR family trio's children characterized in Chaisson et al [Chaisson, Mark J P et al. “Multi-platform discovery of haplotype-resolved structural variation in human genomes.” Nature communications vol. 10,1 1784. 16 Apr. 2019].
 
 Below are instructions on 1) how to deploy a demo version of the database and 2) how to create it yourself from open sourceshow to launch the web interface with our signal collections.
 
