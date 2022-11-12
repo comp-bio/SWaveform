@@ -11,7 +11,8 @@ const karyotypes = {
     'GRCh38': require('../../../data/GRCh38.json')
 }
 
-const side_color = (t) => ({'L': '#F00', 'R': '#080', 'C': '#009'}[t]);
+const side_color = (t) => ({'L': '#F00', 'R': '#080', 'BP': '#009', 'SPSV': '#a60'}[t]);
+const gt_color = (t) => ({'0/1 + 1/0': '#888', '1/1': '#444'}[t]);
 
 let timer = null;
 
@@ -28,7 +29,8 @@ class PlotPage extends React.Component {
             'karyotype': {},
             'chr': '', 'start': 0, 'end': 1, 'offset': 0,
             'data:signal': [], 'types': {},
-            'side': {'L': true, 'R': true, 'BP': true},
+            'side': {'L': true, 'R': true, 'BP': true, 'SPSV': true},
+            'genotype': {'0/1 + 1/0': true, '1/1': true},
             'more': true,
             'windowWidth': window.innerWidth
         };
@@ -161,13 +163,19 @@ class PlotPage extends React.Component {
                             </select>
                         </div>
                     ) : ''}
+                </div>
+                <div className={'controls'}>
                     <div className={'group filters'}>
                         <span className={'label'}>Filter by type:</span>
                         <div>{Object.keys(this.state['types']).map(name => this.checkbox(name, 'types', this.state.type_color))}</div>
                     </div>
                     <div className={'group filters'}>
-                        <span className={'label'}>Filter by type:</span>
+                        <span className={'label'}>Filter by side:</span>
                         <div>{Object.keys(this.state['side']).map(name => this.checkbox(name, 'side', side_color))}</div>
+                    </div>
+                    <div className={'group filters'}>
+                        <span className={'label'}>Filter by genotype:</span>
+                        <div>{Object.keys(this.state['genotype']).map(name => this.checkbox(name, 'genotype', gt_color))}</div>
                     </div>
                 </div>
                 <div className={'controls'}>
@@ -279,10 +287,10 @@ class PlotPage extends React.Component {
                   <div className={'item'}>
                       <span className={'a-box t'}>
                           <span className={'tag side-BP'}>BP</span>
-                          <span className={'tag side-BP'}>SBP</span>
+                          <span className={'tag side-BP'}>SPSV</span>
                       </span>
                       BP – Breakpoint (where L = R);
-                      SBP – Special Breakpoint (a point in an arbitrary part of the signal)
+                      SPSV – Special Breakpoint (a point in an arbitrary part of the signal)
                   </div>
                   <div className={'item'}>
                       <span className={'a-box t'}>

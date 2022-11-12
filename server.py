@@ -87,8 +87,14 @@ def api_signal():
 
     side = [t for t in e['side'] if e['side'][t]]
     sql_s = ','.join(['?'] * len(side))
+
+    genotype = []
+    if e['genotype']['0/1 + 1/0']: genotype.append('1')
+    if e['genotype']['1/1']: genotype.append('2')
+    sql_g = ','.join(['?'] * len(genotype))
+
     offset = int(e['page']) * 24
-    values = [e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types + side + [e['dataset']]
+    values = [e['chr'], 'chr' + e['chr'], e['end'], e['start']] + types + side + genotype + [e['dataset']]
 
     filter_by_population = ""
     if e['population'] != "":
@@ -97,7 +103,8 @@ def api_signal():
 
     cur.execute("SELECT s.id, s.start, s.end, s.type, s.side, s.coverage_offset, t.name, t.population, t.meancov  FROM signal as s "
             "LEFT JOIN target AS t ON t.id = s.target_id "
-            f"WHERE (s.chr = ? OR s.chr = ?) AND s.start < ? AND s.end > ? AND s.type IN ({sql_t}) AND s.side IN ({sql_s}) AND t.dataset = ? "
+            f"WHERE (s.chr = ? OR s.chr = ?) AND s.start < ? AND s.end > ? AND "
+            f"s.type IN ({sql_t}) AND s.side IN ({sql_s}) AND s.genotype IN ({sql_g}) AND t.dataset = ? "
             f"{filter_by_population}"
             f"ORDER BY s.start LIMIT 24 OFFSET {offset}", tuple(values))
 

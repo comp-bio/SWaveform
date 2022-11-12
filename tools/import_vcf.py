@@ -30,7 +30,7 @@ if len(options['vcf']) == 0 or len(options['meta']) == 0:
     echo('    offset:[BND offset in bases (integer, >16, default: 256)] \\\n')
     echo('    genome:[human genome version, default GRCh38] \\\n')
     echo('    special:[if SV is less than this parameter, store it as an additional\n')
-    echo('      breakpoint with type `SBP`, default: 0*] \\\n')
+    echo('      breakpoint with type `SPSV`, default: 0*] \\\n')
     echo('    spp:[number from 0 to 1. Specify the center of SV around which offset \n')
     echo('      will be taken, default: 0.5*]\n')
     echo('\n')
@@ -39,7 +39,7 @@ if len(options['vcf']) == 0 or len(options['meta']) == 0:
     echo('  use the `special` and `spp` options. All SVs greater than the `special` \n')
     echo('  parameter will not be added to the database. `spp` is responsible for the \n')
     echo('  position of the point around which offset will be taken. The point is \n')
-    echo('  calculated relative to the SV size: SBP = L + (R - L) * spp. For example, \n')
+    echo('  calculated relative to the SV size: SPSV = L + (R - L) * spp. For example, \n')
     echo('  if you specify spp = 0.5, then for the deletion in coordinates 3000–3024, \n')
     echo('  center 3012 and the signal from segment 3012±256 [2756–3268] will be stored \n')
     echo('  in the database\n')
@@ -139,8 +139,8 @@ for chr, L, R, sv_type, rec in reader.info():
             signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'L', R - L, gt, ''))
             signals.append((None, target_id, chr, R - offset, R + offset - 1, sv_type, 'R', R - L, gt, ''))
         if R - L < special:
-            SBP = L + int((R - L) * spp)
-            signals.append((None, target_id, chr, SBP - offset, SBP + offset - 1, sv_type, 'SBP', SBP, gt, ''))
+            SPSV = L + int((R - L) * spp)
+            signals.append((None, target_id, chr, SPSV - offset, SPSV + offset - 1, sv_type, 'SPSV', SPSV, gt, ''))
 
 cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?,?)", signals)
 con.commit()

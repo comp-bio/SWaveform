@@ -27,8 +27,8 @@ pip3 install flask tslearn gevent
 
 1.2 Download the precompiled web-interface
 ```bash
-wget https://swaveform.compbio.ru/supplement/swaveform-05-Nov-2022.zip
-unzip swaveform-05-Nov-2022.zip
+wget https://swaveform.compbio.ru/supplement/swaveform-13-Nov-2022.zip
+unzip swaveform-13-Nov-2022.zip
 ```
 
 1.3 Download signals and motifs
@@ -261,7 +261,7 @@ python3 ./tools/import_vcf.py \
     will be taken, default: 0.5*]
 ```
 
-**Special breakpoint (`special` & `spp`):**
+**Special SV (`special` & `spp`):**
 
 If you want to save a signal around a small size SV to the database, you can
 use the `special` and `spp` options. All SVs greater than the `special`
