@@ -219,7 +219,7 @@
     .sax-plot {
       line {
         stroke-width: 1px;
-        stroke: rgb(14, 27, 238);
+        stroke: #296f00;
       }
     }
 
@@ -337,7 +337,7 @@
     .sax-ex {
       width: 4px;
       height: 1px;
-      background: #0e1bee;
+      background: #296f00;
       &:nth-child(1) { transform: translateY(-4px); width: 3px }
       &:nth-child(2) { transform: translateY(-2px) }
       &:nth-child(3) { transform: translateY(3px) }
