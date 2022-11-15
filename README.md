@@ -11,9 +11,9 @@ The demo collection of DOC profiles contains the following samples:
 1. GIAB Ashkenazy; database and motifs (HG002). [_GIAB_HG002.zip (40M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002.zip)
 2. GIAB Ashkenazy; database only, no motifs (HG002). [_GIAB_HG002_nomodel.zip (23M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002_nomodel.zip)
 3. HGDP dataset (911 samples). [_HGDP.zip (3.2G)](https://swaveform.compbio.ru/supplement/_HGDP.zip)
-4. YRI, CHS and PUR family trio's children characterized in Chaisson et al [Chaisson, Mark J P et al. “Multi-platform discovery of haplotype-resolved structural variation in human genomes.” Nature communications vol. 10,1 1784. 16 Apr. 2019].
+4. YRI, CHS and PUR family trio's children characterized in Chaisson et al [Chaisson, Mark J P et al. “Multi-platform discovery of haplotype-resolved structural variation in human genomes.” Nature communications vol. 10,1 1784. 16 Apr. 2019]. [_CHM.zip (30M)](https://swaveform.compbio.ru/supplement/_CHM.zip).
 
-The zip-archives of the collections (1-3) contain:
+The zip-archives of the collections contain:
 * `index.db` file with sqlite database
 * `storage.bcov` file with DOC profiles 
 * `overview.json` SV location density map and coverage density statistics for display in the interface
