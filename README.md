@@ -8,10 +8,18 @@ The repository contains a web interface for the signal database as well as a set
 The resource encompasses depth of coverage (DOC) signals from two large-scale sequencing initiatives delivered by the Human Genome Diversity Project (HGDP)  [Bergström, Anders et al. “Insights into human genetic variation and population history from 929 diverse genomes.” Science (New York, N.Y.) vol. 367,6484 (2020)] and Genome in a Bottle consortia (GIAB)[Zook, Justin M et al. “Extensive sequencing of seven human genomes to characterize benchmark reference materials.” Scientific data vol. 3 160025. 7 Jun. 2016]. As the latter provides variant calls and regions for use in benchmarking and validating variant calling pipelines and contains a smaller number of individuals, we envision it to be a demo collection to deploy the resource locally and to test the accompanying toolset.
 
 The demo collection of DOC profiles contains the following samples:
-* GIAB Ashkenazy; database and motifs (HG002). [_GIAB_HG002.zip (40M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002.zip)
-* GIAB Ashkenazy; database only, no motifs (HG002). [_GIAB_HG002_nomodel.zip (23M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002_nomodel.zip)
-* HGDP dataset (911 samples). [_HGDP.zip (3.2G)](https://swaveform.compbio.ru/supplement/_HGDP.zip)
-* YRI, CHS and PUR family trio's children characterized in Chaisson et al [Chaisson, Mark J P et al. “Multi-platform discovery of haplotype-resolved structural variation in human genomes.” Nature communications vol. 10,1 1784. 16 Apr. 2019].
+1. GIAB Ashkenazy; database and motifs (HG002). [_GIAB_HG002.zip (40M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002.zip)
+2. GIAB Ashkenazy; database only, no motifs (HG002). [_GIAB_HG002_nomodel.zip (23M)](https://swaveform.compbio.ru/supplement/_GIAB_HG002_nomodel.zip)
+3. HGDP dataset (911 samples). [_HGDP.zip (3.2G)](https://swaveform.compbio.ru/supplement/_HGDP.zip)
+4. YRI, CHS and PUR family trio's children characterized in Chaisson et al [Chaisson, Mark J P et al. “Multi-platform discovery of haplotype-resolved structural variation in human genomes.” Nature communications vol. 10,1 1784. 16 Apr. 2019].
+
+The zip-archives of the collections (1-3) contain:
+* `index.db` file with sqlite database
+* `storage.bcov` file with DOC profiles 
+* `overview.json` SV location density map and coverage density statistics for display in the interface
+* `adakms/*.json` motif search results (no concatenation)
+* `media/*.png` signal images for the [Model page](https://swaveform.compbio.ru/model)
+* `models/*.motif` & `models/*.json` final found motifs after combining bootstrap data
 
 Below are instructions on 1) how to deploy a demo version of the database and 2) how to create it yourself from open source show to launch the web interface with our signal collections.
 
@@ -248,15 +256,15 @@ HG007 HG007 Chinese F 16.65
 Usage:
 
 ```text
-python3 ./tools/import_vcf.py \
+python3 tools/import_vcf.py \
   db:[DB path name] \
   vcf:[vcf or vcf.gz file] \
   meta:[metadata file] \
   name:[dataset file] \
   offset:[BND offset in bases (integer, >16, default: 256)] \
   genome:[human genome version, default GRCh38] \
-  special:[if SV is less than this parameter, store it as an additional
-    breakpoint with type `SBP`, default: 0*] \
+  special:[if SV is less than `offset` and greater than this parameter, 
+    save it as an additional breakpoint with type `spSV`, default: 30*] \
   spp:[number from 0 to 1. Specify the center of SV around which offset 
     will be taken, default: 0.5*]
 ```
@@ -264,12 +272,12 @@ python3 ./tools/import_vcf.py \
 **Special SV (`special` & `spp`):**
 
 If you want to save a signal around a small size SV to the database, you can
-use the `special` and `spp` options. All SVs greater than the `special`
-parameter will not be added to the database. `spp` is responsible for the
-position of the point around which `offset` will be taken. The point is
-calculated relative to the SV size: `SBP = L + (R - L) * spp`. For example,
-if you specify `spp` = 0.5, then for the deletion in coordinates 3000–3024,
-center is 3012. The signal from segment 3012±256 [2756–3268] will be stored
+use the `special` and `spp` options. All SVs less than `offset` and greater
+than the `special` parameter will be added to the database. `spp` is responsible for
+the position of the point around which offset will be taken. The point is
+calculated relative to the SV size: spSV = L + (R - L) * spp. For example,
+if you specify spp = 0.5, then for the deletion in coordinates 3000–3024,
+center 3012 and the signal from segment 3012±256 [2756–3268] will be stored
 in the database
 
 Example:
@@ -299,7 +307,26 @@ python3 ./tools/import_coverage.py db:_HGDP name:HGDP path:HGDP/cram/
 ```
 
 
-### 2.3 Interface deployment (for JavaScript developers)
+### 2.3 Building database using snakemake
+
+2.3.1 Download the necessary .cram and .vcf files to directory `snakedata`
+
+2.3.2 Set up a virtual environment:
+
+```bash
+virtualenv -p python3 snm
+source snm/bin/activate
+pip install snakemake tslearn matplotlib h5py PyVCF3
+```
+
+2.3.3 Create a database
+
+```bash
+snakemake --cores 1
+```
+
+
+### 2.4 Interface deployment (for JavaScript developers)
 
 To work on the interface, we used React.
 For development use hot-reload server:
