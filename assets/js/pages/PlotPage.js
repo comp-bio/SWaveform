@@ -11,7 +11,7 @@ const karyotypes = {
     'GRCh38': require('../../../data/GRCh38.json')
 }
 
-const side_color = (t) => ({'L': '#F00', 'R': '#080', 'BP': '#009', 'SPSV': '#a60'}[t]);
+const side_color = (t) => ({'L': '#F00', 'R': '#080', 'BP': '#009', 'spSV': '#a60'}[t]);
 const gt_color = (t) => ({'0/1 + 1/0': '#888', '1/1': '#444'}[t]);
 
 let timer = null;
@@ -29,7 +29,7 @@ class PlotPage extends React.Component {
             'karyotype': {},
             'chr': '', 'start': 0, 'end': 1, 'offset': 0,
             'data:signal': [], 'types': {},
-            'side': {'L': true, 'R': true, 'BP': true, 'SPSV': true},
+            'side': {'L': true, 'R': true, 'BP': true, 'spSV': true},
             'genotype': {'0/1 + 1/0': true, '1/1': true},
             'more': true,
             'windowWidth': window.innerWidth
@@ -287,10 +287,10 @@ class PlotPage extends React.Component {
                   <div className={'item'}>
                       <span className={'a-box t'}>
                           <span className={'tag side-BP'}>BP</span>
-                          <span className={'tag side-BP'}>SPSV</span>
+                          <span className={'tag side-BP'}>spSV</span>
                       </span>
                       BP – Breakpoint (where L = R);
-                      SPSV – Special Breakpoint (a point in an arbitrary part of the signal)
+                      spSV – Special Breakpoint (a point in an arbitrary part of the signal)
                   </div>
                   <div className={'item'}>
                       <span className={'a-box t'}>

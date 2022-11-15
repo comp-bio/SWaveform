@@ -265,6 +265,10 @@ for src in names:
 print(f"Files: " + str(len(names)))
 print(f"Runs:  " + str(len(data)))
 
+if len(data) == 0:
+    print(f"Skip")
+    sys.exit(0)
+
 # Align Clusters
 A, B = ([data[0][0]], [data[0][1]])
 k = 'cls_mean'

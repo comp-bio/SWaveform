@@ -6,7 +6,7 @@ from vcf2score import Variants
 options = {
   'db': time.strftime('signal-%Y_%m_%d-%H_%M_%S'),
   'offset': 256,
-  'special': 0,
+  'special': 30,
   'spp': 0,
   'genome': 'GRCh38',
   'sample': None,
@@ -29,17 +29,17 @@ if len(options['vcf']) == 0 or len(options['meta']) == 0:
     echo('    name:[dataset file] \\\n')
     echo('    offset:[BND offset in bases (integer, >16, default: 256)] \\\n')
     echo('    genome:[human genome version, default GRCh38] \\\n')
-    echo('    special:[if SV is less than this parameter, store it as an additional\n')
-    echo('      breakpoint with type `SPSV`, default: 0*] \\\n')
+    echo('    special:[if SV is less than `offset` and greater than this parameter, \n')
+    echo('      save it as an additional breakpoint with type `spSV`, default: 30*] \\\n')
     echo('    spp:[number from 0 to 1. Specify the center of SV around which offset \n')
     echo('      will be taken, default: 0.5*]\n')
     echo('\n')
     echo('Special breakpoint (`special` & `spp`):\n')
     echo('  If you want to save a signal around a small size SV to the database, you can \n')
-    echo('  use the `special` and `spp` options. All SVs greater than the `special` \n')
-    echo('  parameter will not be added to the database. `spp` is responsible for the \n')
-    echo('  position of the point around which offset will be taken. The point is \n')
-    echo('  calculated relative to the SV size: SPSV = L + (R - L) * spp. For example, \n')
+    echo('  use the `special` and `spp` options. All SVs less than `offset` and greater \n')
+    echo('  than the `special` parameter will be added to the database. `spp` is responsible for \n')
+    echo('  the position of the point around which offset will be taken. The point is \n')
+    echo('  calculated relative to the SV size: spSV = L + (R - L) * spp. For example, \n')
     echo('  if you specify spp = 0.5, then for the deletion in coordinates 3000–3024, \n')
     echo('  center 3012 and the signal from segment 3012±256 [2756–3268] will be stored \n')
     echo('  in the database\n')
@@ -135,12 +135,13 @@ for chr, L, R, sv_type, rec in reader.info():
         counts[sv_type] += 1
         if R == L:
             signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'BP', L, gt, ''))
-        else:
+        if R - L > offset:
             signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'L', R - L, gt, ''))
             signals.append((None, target_id, chr, R - offset, R + offset - 1, sv_type, 'R', R - L, gt, ''))
-        if R - L < special:
-            SPSV = L + int((R - L) * spp)
-            signals.append((None, target_id, chr, SPSV - offset, SPSV + offset - 1, sv_type, 'SPSV', SPSV, gt, ''))
+        else:
+            if R - L >= special:
+                spSV = L + int((R - L) * spp)
+                signals.append((None, target_id, chr, spSV - offset, spSV + offset - 1, sv_type, 'spSV', spSV, gt, ''))
 
 cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?,?)", signals)
 con.commit()
