@@ -1,9 +1,12 @@
 import glob, os
 
 SAMPLES = [os.path.basename(f).split('.')[0] for f in glob.glob('snakedata/*.cram')]
+CHROMOSOMES = ['chr' + str(i) for i in range(1, 23)] + ['chrX', 'chrY']
 
 rule all:
   input:
+    directory("_DB/models"),
+    directory("_DB/adakms"),
     "_DB/overview.json",
     "_DB/storage.bcov",
     "_DB/index.db"
@@ -22,8 +25,8 @@ rule find_motif:
     "_DB/storage.bcov",
     "_DB/index.db"
   output:
-    "_DB/models",
-    "_DB/adakms"
+    directory("_DB/models"),
+    directory("_DB/adakms")
   params:
     "DEL INS LOC"
   shell:
@@ -36,24 +39,32 @@ rule find_motif:
     "  done\n"
     "done\n"
 
-rule create:
+rule import_vcf:
   input:
-    expand("doc/{sample}/", sample=SAMPLES),
+    expand("doc/{sample}/{chr}.bcov", sample=SAMPLES, chr=CHROMOSOMES),
     "snakedata/metafile"
   output:
-    "_DB/storage.bcov",
     "_DB/index.db"
   shell:
     "for vcf in $(ls snakedata/*.vcf); do\n"
-    "  python ./tools/import_vcf.py db:{output} vcf:$vcf meta:{input}/metafile name:'CHM'\n"
+    "  python ./tools/import_vcf.py db:_DB vcf:$vcf meta:snakedata/metafile name:'CHM'\n"
     "done\n"
-    "python ./tools/import_coverage.py db:_DB path:doc name:'CHM'\n"
+
+rule import_bcov:
+  input:
+    expand("doc/{sample}/{chr}.bcov", sample=SAMPLES, chr=CHROMOSOMES),
+    "snakedata/metafile",
+    "_DB/index.db"
+  output:
+    "_DB/storage.bcov"
+  shell:
+    "python ./tools/import_coverage.py db:_DB path:./doc name:'CHM'\n"
 
 rule doc2bcov:
   input:
     expand("doc/{sample}.per-base.bed.gz", sample=SAMPLES)
   output:
-    expand("doc/{sample}/", sample=SAMPLES)
+    expand("doc/{sample}/{chr}.bcov", sample=SAMPLES, chr=CHROMOSOMES)
   shell:
     "cd doc\n"
     "for name in $(ls *.bed.gz); do\n"
