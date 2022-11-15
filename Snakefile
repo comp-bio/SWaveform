@@ -1,3 +1,7 @@
+import glob, os
+
+SAMPLES = [os.path.basename(f).split('.')[0] for f in glob.glob('snakedata/*.cram')]
+
 rule all:
   input:
     "_DB/overview.json",
@@ -34,7 +38,7 @@ rule find_motif:
 
 rule create:
   input:
-    "doc/*/*.bcov",
+    expand("doc/{sample}/", sample=SAMPLES),
     "snakedata/metafile"
   output:
     "_DB/storage.bcov",
@@ -47,9 +51,9 @@ rule create:
 
 rule doc2bcov:
   input:
-    "doc/*.bed.gz"
+    expand("doc/{sample}.per-base.bed.gz", sample=SAMPLES)
   output:
-    "doc/*/*.bcov"
+    expand("doc/{sample}/", sample=SAMPLES)
   shell:
     "cd doc\n"
     "for name in $(ls *.bed.gz); do\n"
@@ -65,13 +69,15 @@ rule doc:
     "mosdepth",
     "Homo_sapiens.GRCh38.dna.toplevel.fa"
   output:
-    "doc/*.bed.gz"
+    expand("doc/{sample}.per-base.bed.gz", sample=SAMPLES)
   shell:
     "mkdir -p doc\n"
     "for crm in $(ls snakedata/*.cram); do\n"
     "  code=$(basename $crm | awk -F\".\" {{'print $1'}})\n"
-    "  echo \"- $crm -> doc/$code\"\n"
-    "  ./mosdepth -t 24 -f Homo_sapiens.GRCh38.dna.toplevel.fa doc/$code $crm\n"
+    "  if [ ! -f doc/$code.per-base.bed.gz ]; then\n"
+    "    echo \"- $crm -> doc/$code\"\n"
+    "    ./mosdepth -t 24 -f Homo_sapiens.GRCh38.dna.toplevel.fa doc/$code $crm\n"
+    "  fi\n"
     "done;"
 
 rule install_mosdepth:
