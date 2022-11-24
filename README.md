@@ -35,8 +35,8 @@ pip3 install flask tslearn gevent
 
 1.2 Download the precompiled web-interface
 ```bash
-wget https://swaveform.compbio.ru/supplement/swaveform-16-Nov-2022.zip
-unzip swaveform-16-Nov-2022.zip
+wget https://swaveform.compbio.ru/supplement/swaveform-24-Nov-2022.zip
+unzip swaveform-24-Nov-2022.zip
 ```
 
 1.3 Download signals and motifs
