@@ -10,11 +10,17 @@ import random, json, warnings
 
 # --------------------------------------------------------------------------- #
 start_time = time.time()
-options = {'db': '', 'name': '', 'type': '', 'side': 'BP', 'sax': 64, 'alphabet': 24, 'window': 32, 'dataset': 400, 'repeats': 20, 'seed': 1337}
+options = {
+  'db': '', 'name': '', 'type': '', 'side': 'BP', 'gt': '0',
+  'sax': 64, 'alphabet': 24, 'window': 32, 'dataset': 400, 'repeats': 20, 'seed': 1337
+}
 for par in sys.argv[1:]:
     k, v = (par + ':').split(':')[0:2]
     if k in options:
         options[k] = v if k in ['db', 'type', 'side', 'name'] else int(v)
+
+if options['gt'] == '0/1': options['gt'] = '1'
+if options['gt'] == '1/1': options['gt'] = '2'
 
 db = f"{options['db']}/index.db"
 bc = f"{options['db']}/storage.bcov"
@@ -30,6 +36,7 @@ def usage():
     echo('    name:[dataset name] \\\n')
     echo('    type:[SV type. ex: DEL] \\\n')
     echo('    side:[SV side. L, R or BP] \\\n')
+    echo('    gt:[genotype, 0/1 (1) or 1/1 (2), all by default] \\\n')
     echo('    sax:[SAX-transform width, default: 64] \\\n')
     echo('    alphabet:[SAX-transform height (alphabet size), default: 24] \\\n')
     echo('    window:[motif width, default: 32] \\\n')
@@ -64,7 +71,34 @@ if options['type'] == '':
     echo('\n')
     usage()
 
+
+def read_random(count=100):
+    WHERE = ''
+    if options['gt'] == '1': WHERE = ' AND s.genotype = 1'
+    if options['gt'] == '2': WHERE = ' AND s.genotype = 2'
+    cur.execute("SELECT s.coverage_offset, s.start, s.end FROM `signal` as s "
+        "LEFT JOIN `target` as t ON s.target_id = t.id "
+        f"WHERE t.dataset = '{options['name']}' and s.type = '{options['type']}' and s.side = '{options['side']}' AND s.coverage_offset != '' "
+        f"{WHERE} "
+        f"ORDER BY random() LIMIT {count}")
+    signals = []
+    for pos, l, r in cur.fetchall():
+        coverage.seek(pos * 2, 0)
+        bin = coverage.read((r - l + 1) * 2)
+        if (len(bin) != 1024):
+            print(pos * 2, r, l, len(bin), 'ALARM')
+            sys.exit(1)
+        signals.append([(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)])
+    return signals
+
+
 # --------------------------------------------------------------------------- #
+MIN_SAMPLES_COUNT = 200
+if (len(read_random(MIN_SAMPLES_COUNT)) != MIN_SAMPLES_COUNT):
+    echo(f"[!] No coverage data found for: {options['type']} {options['side']}\n")
+    sys.exit(0)
+# --------------------------------------------------------------------------- #
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -79,21 +113,7 @@ from tslearn.metrics import dtw
 INF = 999999
 CACHE = {}
 
-def read_random(count=100):
-    cur.execute("SELECT s.coverage_offset, s.start, s.end FROM `signal` as s "
-        "LEFT JOIN `target` as t ON s.target_id = t.id "
-        f"WHERE t.dataset = '{options['name']}' and s.type = '{options['type']}' and s.side = '{options['side']}' "
-        f"ORDER BY random() LIMIT {count}")
-    signals = []
-    for pos, l, r in cur.fetchall():
-        coverage.seek(pos * 2, 0)
-        bin = coverage.read((r - l + 1) * 2)
-        if (len(bin) != 1024):
-            print(pos * 2, r, l, len(bin), 'ALARM')
-            sys.exit(1)
-        signals.append([(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)])
-    return signals
-
+# --------------------------------------------------------------------------- #
 
 def basis(size, func):
     R = np.arange(0, 2 * math.pi, 2 * math.pi / size)
@@ -161,7 +181,7 @@ def find_KMS_v5(subs, seed, **kwargs):
 
     CACHE = {}
     saxs = []
-    use_cnt = max(int(cnt/20), 90)
+    use_cnt = min(cnt, max(int(cnt/20), 90))
     for i in range(0, use_cnt):
         for j in range(i, use_cnt):
             sd = saxdist(i, j)
@@ -244,7 +264,7 @@ for rep in range(0, options['repeats']):
     data = np.array(read_random(options['dataset']))
     if (len(data) == 0):
         echo(f"[!] No coverage data found for: {options['type']}\n")
-        continue
+        break
     scld = TimeSeriesScalerMeanVariance().fit_transform([compress(sig, 8) for sig in data])
 
     model = TimeSeriesKMeans(n_clusters=2, n_init=1, metric="dtw", random_state=options['seed'], n_jobs=32)
@@ -273,15 +293,22 @@ for rep in range(0, options['repeats']):
     runs.append(results)
 
 # Export
+if len(runs) == 0:
+    sys.exit()
+
 if not os.path.exists(f"{options['db']}/adakms"): os.makedirs(f"{options['db']}/adakms")
 name = "_".join([options['name'], options['type'], options['side']])
-out = f"{options['db']}/adakms/{name}_s{options['sax']}-{options['alphabet']}_w{options['window']}_d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json"
+out = f"{options['db']}/adakms/{name}_gt{options['gt']}_s{options['sax']}-{options['alphabet']}_w{options['window']}_d{options['dataset']}_r{options['repeats']}_s{options['seed']}.json"
 with open(out, "w") as f:
     json.dump(runs, f)
 
 m_cur, m_max = tracemalloc.get_traced_memory()
 sec_ = int(time.time() - start_time)
 min_ = int(sec_/60)
+
+with open(out + '.log', "w") as log:
+    log.write(f"Time:   {min_} min. ({sec_} sec.)\n")
+    log.write(f"Memory: {int(m_max/1024/1024)}MB\n")
 
 echo(f"Time:   {min_} min. ({sec_} sec.)\n")
 echo(f"Memory: {int(m_max/1024/1024)}MB\n")

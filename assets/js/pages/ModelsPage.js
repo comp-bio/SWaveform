@@ -30,76 +30,83 @@ const description = (
 
 const empty = (
     <div className={'part'}>
-        Для этой базы данных не было найдено мотивов.
+        No motifs found for this database.
     </div>
 );
+
+class ModelsPageTab extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+    render() {
+        return <>111</>
+    }
+}
+
 
 class ModelsPage extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {'models': [], 'meta': [], 'hmm': false, 'title': false};
+        this.state = {'models': [], 'ds_names': [], 'tab': ''};
         this.gridPlot = this.gridPlot.bind(this);
     }
 
     componentDidMount() {
         axios({url: `/api/models`, method: 'get'}).then((res) => {
+            res.data['tab'] = res.data['ds_names'][0];
             this.setState(res.data);
-            res.data.meta.map(src => {
-                this.setState({[`src:${src}`]: 'loading'})
-                axios({url: `/api/models/${src}`, method: 'get'}).then((res) => {
-                    this.setState({[`src:${src}`]: res.data})
-                    // console.log('>>>', this.state);
-                });
-            });
         });
     }
 
-    gridPlot(code, cls) {
-        const C = this.state[`src:detail_${code}.${cls}.json`] || null;
-        // console.log('>>>', this.state);
-        if (C === 'loading') return (
-            <article className={'cluster empty'} key={code + cls}>
-                [loading]
-            </article>
-        );
-        if (!C) return (
-            <article className={'cluster empty'} key={code + cls}>
-                [Cluster removed] {`src:detail_${code}.${cls}.json`}
-            </article>
+    gridPlot(name, code, cls) {
+        const M = this.state.models[name] ? this.state.models[name].meta[`${code}.${cls}.detail.json`] : false;
+        if (!M) return (
+            <></>
+            // <article className={'cluster empty'} key={code + cls}>
+            //     [Cluster removed] {`${code}.${cls}.detail.json`}
+            // </article>
         );
 
         return (
             <article className={'cluster'} key={code + cls}>
-                <code className={'part'}>{C.part}</code>
-                <img className={'img'} src={`data:image/png;base64,${C.cluster_detail}`}  alt={'Cluster'} />
-                <img className={'img'} src={`data:image/png;base64,${C.motif_signal}`}  alt={'Motif_signal'} />
+                <code className={'part'}>{M.part}, Threshold: {M.threshold.toFixed(2)}</code>
+                <img className={'img'} src={`/api/media/${M.cluster_detail}`} alt={'Cluster'} />
+                <img className={'img'} src={`/api/media/${M.motif_signal}`} alt={'Motif_signal'} />
                 <div className={'img-wrap'}>
-                    <img className={'img'} src={`data:image/png;base64,${C.motif}`}  alt={'Motif'} />
-                    <a target={'_blank'} href={`/api/models/mt_${C.code}.${C.cluster_name}.motif`} className={'button'}>{icon} Download</a>
+                    <img className={'img'} src={`/api/media/${M.motif}`} alt={'Motif'} />
+                    <a target={'_blank'} href={`/api/models/mt_${M.code}.${M.cluster_name}.motif`} className={'button'}>{icon} Download</a>
                 </div>
             </article>
         );
     }
 
-
-
     render() {
-        // console.log('this.state.models', this.state.models);
         return (
             <>
-                {this.state.models.length ? description : empty}
+                {this.state.ds_names.length ? description : empty}
+                <div className={'tabs'}>
+                    {this.state.ds_names.map(name => (
+                        <div onClick={() => this.setState({'tab': name})}
+                             key={name}
+                             className={'tab' + (name === this.state.tab ? ' current' : '')}>{name}</div>
+                    ))}
+                    <div className={'spacer'} />
+                </div>
                 <div className={'model-items'}>
-                    {this.state.models.map(src => {
-                        const code = src.split('.plt.png')[0];
-                        return (
-                            <div className={'model-item'} key={code}>
-                                <img className={'img-type'} src={`/api/media/${src}`} />
-                                <div className={'m-clusters'}>
-                                    {this.gridPlot(code,'A')}
-                                    {this.gridPlot(code,'B')}
+                    {this.state.ds_names.map(name => {
+                        if (name !== this.state.tab) return '';
+                        return this.state.models[name].media.map(src => {
+                            const code = src.split('.plt.png')[0];
+                            return (
+                                <div className={'model-item'} key={code}>
+                                    <img className={'img-type'} src={`/api/media/${src}`} />
+                                    <div className={'m-clusters'}>
+                                        {this.gridPlot(name, code, 'A')}
+                                        {this.gridPlot(name, code, 'B')}
+                                    </div>
                                 </div>
-                            </div>
-                        )
+                            )
+                        })
                     })}
                 </div>
             </>

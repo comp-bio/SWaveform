@@ -38,11 +38,14 @@ class Variants:
             if 'SVTYPE' in record.INFO:
                 sv_type = record.INFO['SVTYPE']
 
-            if 'SVLEN' in record.INFO:
+            if 'END' in record.INFO:
+                stop = int(record.INFO['END'])
+
+            if 'SVLEN' in record.INFO and sv_type != 'INS':
                 if isinstance(record.INFO['SVLEN'], list):
-                    stop = start + record.INFO['SVLEN'][0]
+                    stop = start + abs(record.INFO['SVLEN'][0])
                 else:
-                    stop = start + record.INFO['SVLEN']
+                    stop = start + abs(record.INFO['SVLEN'])
 
             if sv_type == 'UND' and len(record.ALT) == 1:
                 o = re.match(r'([A-Z]+)\:(.+)', record.ALT[0].type)
@@ -56,9 +59,6 @@ class Variants:
                 if o:
                     sv_type = o.group(1)
                     stop = int(o.group(4))
-
-            if 'END' in record.INFO:
-                stop = int(record.INFO['END'])
 
             L, R = (min(start, stop), max(start, stop))
             yield [chr, L, R, sv_type, rec]

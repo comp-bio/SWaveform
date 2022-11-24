@@ -35,7 +35,7 @@ class DescriptionPage extends React.Component {
                 <h4 className={'h4'}>Total signals in database:</h4>
                 <div className={'items'}><code>{overview.total.toLocaleString()}</code></div>
                 <div className={'dataset-groups'}>
-                    {Object.keys(overview['ds']).map(ds => {
+                    {overview['ds_names'].map(ds => {
                         const d = overview['ds'][ds];
                         return (
                             <div className={'dataset-group'} key={ds}>
@@ -43,7 +43,7 @@ class DescriptionPage extends React.Component {
                                 <table>
                                     <thead><tr><th>Type of SV &rarr;</th>{Object.keys(d.types).map(type => <th key={type}>{type}</th>)}</tr></thead>
                                     <tbody>
-                                    {[['Left', 'L'], ['Right', 'R'], ['BP', 'BP']].map(k =>
+                                    {[['Left', 'L'], ['Right', 'R'], ['BP', 'BP'], ['Special SV', 'spSV']].map(k =>
                                         <tr key={k}>
                                             <td><span className={`tag side-${k[1]}`}>{k[1]}</span> {k[0]}:</td>
                                             {Object.keys(d.types).map(type => {

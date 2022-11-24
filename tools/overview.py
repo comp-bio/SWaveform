@@ -2,7 +2,7 @@
 import os, sys, glob, sqlite3, json
 from _functions import *
 
-options = {'db': '', 'max_hist': 500}
+options = {'db': '', 'max_hist': 500, 'order': ''}
 for par in sys.argv[1:]:
     k, v = (par + ':').split(':')[0:2]
     if k in options: options[k] = v
@@ -46,11 +46,10 @@ if not os.path.exists(f"{options['db']}/media"):
 
 def type_plot(data, name, code):
     fig, ax = plt.subplots(figsize=(6, 4))
-    opacity = max(10/len(data), 0.002)
+    opacity = min(1, max(10/len(data), 0.002))
     for x in data:
-        opacity = 10/len(data)
         ax.plot(x, linewidth=1, alpha=opacity, color='k')
-    ax.set_title(f"{name} {code}")
+    ax.set_title(code.replace('_', ' ').replace('gt1', ' (het)').replace('gt2', ' (hom)'))
     ax.set_xlim((0,127))
     ax.set_ylim((0,23))
     plt.savefig(f"{options['db']}/media/{name}_{code}.plt.png", format='png', bbox_inches="tight")
@@ -62,31 +61,48 @@ sax = SymbolicAggregateApproximation(n_segments=128, alphabet_size_avg=24)
 cur.execute("SELECT t.dataset, s.type, s.side FROM `signal` as s "
     "LEFT JOIN `target` as t ON s.target_id = t.id "
     "GROUP BY t.dataset, s.type, s.side")
-types = [obj for obj in cur.fetchall()]
+
+datasets = {}
+for name, tp, side in cur.fetchall():
+    if name not in datasets: datasets[name] = []
+    datasets[name].append([tp, side])
+
+datasets_names = []
+ordered = []
+if options['order']:
+    for code in options['order'].split(','):
+        if code in datasets:
+            datasets_names.append(code)
+            ordered.append(code)
+for code in datasets:
+    if code not in ordered:
+        datasets_names.append(code)
 
 count = 800
-for name, tp, side in types:
-    cur.execute("SELECT s.coverage_offset, s.start, s.end FROM `signal` as s "
-        "LEFT JOIN `target` as t ON s.target_id = t.id "
-        f"WHERE t.dataset = '{name}' and s.type = '{tp}' and s.side = '{side}' "
-        f"ORDER BY random() LIMIT {count}")
-    signals = []
-    for pos, l, r in cur.fetchall():
-        coverage.seek(pos * 2, 0)
-        bin = coverage.read((r - l + 1) * 2)
-        signals.append([(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)])
-    cls = TimeSeriesScalerMeanVariance().fit_transform(signals)
-    trsf = sax.fit_transform(cls)
-    type_plot(trsf, name, f"{tp}_{side}")
-    echo(f"– img: {name} {tp}_{side}\n")
+for name in datasets:
+    for tp, side in datasets[name]:
+        for gt in ['1', '2']:
+            cur.execute("SELECT s.coverage_offset, s.start, s.end FROM `signal` as s "
+                "LEFT JOIN `target` as t ON s.target_id = t.id "
+                f"WHERE t.dataset = '{name}' and s.type = '{tp}' and s.side = '{side}' and s.genotype = {gt} "
+                f"ORDER BY random() LIMIT {count}")
+            signals = []
+            for pos, l, r in cur.fetchall():
+                coverage.seek(pos * 2, 0)
+                bin = coverage.read((r - l + 1) * 2)
+                signals.append([(bin[i] * 256 + bin[i + 1]) for i in range(0, len(bin), 2)])
+            echo(f"– img: {name} {tp}_{side}_gt{gt} (" +str(len(signals))+ ")\n")
+            if len(signals) > 0:
+                cls = TimeSeriesScalerMeanVariance().fit_transform(signals)
+                trsf = sax.fit_transform(cls)
+                type_plot(trsf, name, f"{tp}_{side}_gt{gt}")
 
 # --------------------------------------------------------------------------- #
 ret = cur.execute("SELECT COUNT(*) FROM signal").fetchone()
-info = {'total': list(ret)[0]}
+info = {'total': list(ret)[0], 'ds_names': datasets_names, 'ds': {}}
 echo('Total signals: %d\n' % info['total'])
 
 cur.execute("SELECT COUNT(*), dataset, genome_version FROM target GROUP BY dataset")
-info['ds'] = {}
 echo('Datasets: \n')
 for cnt, ds, genome_version in cur.fetchall():
     info['ds'][ds] = {'genome': genome_version}

@@ -35,7 +35,6 @@ class PlotPage extends React.Component {
             'windowWidth': window.innerWidth
         };
 
-        // types.map(k => { this.state['types'][k] = true; });
         this.loader = new LoadSignal(this);
         this.onResize = this.onResize.bind(this);
     }
@@ -60,17 +59,18 @@ class PlotPage extends React.Component {
             url: `/api/overview`,
             method: 'get'
         }).then((res) => {
-            console.log('res', res.data);
             let obj = {'overview': res.data};
             obj['types'] = Object.values(res.data['ds']).map(v => Object.keys(v['types'])).flat();
             obj['type_color'] = d3.scaleOrdinal().domain(obj['types']).range(d3.schemeTableau10);
             this.setState(obj, () => {
-                this.selectDataset(Object.keys(res.data['ds'])[0]);
+                this.selectDataset(this.state.overview['ds_names'][0]);
             });
         });
 
         this.gmap = KaryotypeBar('#gmap', this);
         window.addEventListener("resize", this.onResize);
+        window.sig = (txt) => { this.loader.sig(txt); };
+        // window.plotpage = this;
     }
     
     componentWillUnMount() {
@@ -149,7 +149,7 @@ class PlotPage extends React.Component {
                             value={this.state['dataset']} className={'selector button'}
                             onChange={(e) => this.selectDataset(e.target.value)}>
                             {this.state.overview ? (
-                                Object.keys(this.state.overview['ds']).map(k => <option key={k} value={k}>{k} ({this.state.overview['ds'][k]['genome']})</option>)
+                                this.state.overview['ds_names'].map(k => <option key={k} value={k}>{k} ({this.state.overview['ds'][k]['genome']})</option>)
                             ) : ''}
                         </select>
                     </div>
@@ -213,12 +213,13 @@ class PlotPage extends React.Component {
                             <span className={'circle'} style={{background: this.state.type_color(e.type)}} />
                             <span className={'tag'}>{e.type}</span>
                             <span className={`tag side-${e.side}`}>{e.side}</span>
+                            <span className={'tag'}>{(e.genotype === 1 ? 'het' : '') + (e.genotype === 2 ? 'hom' : '')} {e.genotype_text}</span>
                           </span>
                           <span>
                             <span className={'tag mini'}>{short_name}</span>
                           </span>
                       </div>
-                      <Signal obj={e} parent={this} />
+                      <Signal key={e.id} obj={e} parent={this} />
                   </div>
                 );
             });

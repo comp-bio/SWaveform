@@ -54,8 +54,9 @@ from tslearn.metrics import dtw
 
 # --------------------------------------------------------------------------- #
 dir_ = f"{options['db']}/models/"
-if not os.path.exists(dir_):
-    os.makedirs(dir_)
+if not os.path.exists(dir_): os.makedirs(dir_)
+plt_ = f"{options['db']}/media/"
+if not os.path.exists(plt_): os.makedirs(plt_)
 
 quantile_use = [0.015, 0.020, 0.025]
 quantile_use = [0.015]
@@ -126,18 +127,20 @@ def motif_only(ax, g):
     ax.set(xlim=(0, 31), ylim=(0, 23))
 
 
-@as_base64
-def motif_on_signal_small(g):
+def motif_on_signal_small(g, name):
     fig, ax = plt.subplots(figsize=(10, 6))
     plt.axis('off')
     motif_on_signal(ax, g, None)
+    plt.savefig(plt_ + name, format='png', bbox_inches="tight")
+    plt.close()
 
 
-@as_base64
-def motif_only_small(g):
+def motif_only_small(g, name):
     fig, ax = plt.subplots(figsize=(10, 10))
     plt.axis('off')
     motif_only(ax, g)
+    plt.savefig(plt_ + name, format='png', bbox_inches="tight")
+    plt.close()
 
 
 @as_base64
@@ -181,26 +184,29 @@ def cluster_plot_small(C):
     ax.set(xlim=(0, 63), ylim=(-1.8, 1.8))
 
 
-@as_base64
-def cluster_plot_detail(C, cls_name=None):
+def cluster_plot_detail(C, cls_name=None, name=''):
     fig, ax = plt.subplots(figsize=(10, 6))
     for t in C[0:2000]:
         x, s = (np.array(t['cls_mean']), np.array(t['cls_std']))
         opacity = 0.01 # max(10/sum(s)/len(C[0:2000]), 0.01)
         ax.fill_between([i for i in range(0, 64)], x + s/2, x - s/2, alpha=opacity, linewidth=0, color='k')
-        ax.plot(x, linewidth=1, alpha=2 * opacity, color='b')
+        ax.plot(x, linewidth=1, alpha=0.15, color='b')
 
     note = 'Size: ~{:.2f}%'.format(100 * np.mean([t['elements']/t['dataset'] for t in C]))
     ax.set(xlim=(0, 63), ylim=(-1.8, 1.8))
     ax.text(1.4, -1.68, note, ha="left", va="bottom", size=10, bbox=bbox)
     if cls_name == None: cls_name = ''
     ax.set_title(f'Cluster {cls_name}')
+    plt.savefig(plt_ + name, format='png', bbox_inches="tight")
+    plt.close()
 
 
 def cluster2motif(C, cls_name):
     part = np.mean([t['elements']/t['dataset'] for t in C])
     if part < 1/3: return None
 
+    threshold = np.mean([run['motif'][0]['threshold'] for run in C])
+    print(f"Threshold for cls {cls_name}: {threshold}")
     # gpx = [get_groups(C, q) for q in range(3)]
     # g = gpx[0][0]
     gp = get_groups(C, 0)
@@ -208,6 +214,7 @@ def cluster2motif(C, cls_name):
         print(f"Motif not found for class: {cls_name}")
         return
     g = gp[0]
+
     motif = np.array([sig[offset:offset + options['window']] for offset, sig in g])
     offset = np.array([offset for offset, sig in g])
 
@@ -223,7 +230,8 @@ def cluster2motif(C, cls_name):
         f'offset: {offset.mean()}',
         f'offset_std: {offset.std()}',
         f'motif: {mm}',
-        f'motif_std: {ms}'
+        f'motif_std: {ms}',
+        f'threshold: {threshold}'
     ]))
     f.close()
     print(f"Motif: {filename}")
@@ -237,19 +245,24 @@ def cluster2motif(C, cls_name):
         'part': '{:.2f}%'.format(100 * part),
         'cluster_x': cl_x,
         'cluster_s': cl_s,
-        'motif_signal': motif_on_signal_small(g),
-        'motif': motif_only_small(g)
+        'motif_signal': f"{options['prefix']}.{cls_name}.motif_signal.png",
+        'motif': f"{options['prefix']}.{cls_name}.motif.png",
+        'threshold': threshold
     }
 
-    out = f"{dir_}small_{options['prefix']}.{cls_name}.json"
+    motif_on_signal_small(g, info['motif_signal'])
+    motif_only_small(g, info['motif'])
+
+    out = f"{dir_}{options['prefix']}.{cls_name}.small.json"
     with open(out, "w") as f:
         json.dump(info, f)
     print(f"Motif plot: {out}")
 
+    info['cluster_detail'] = f"{options['prefix']}.{cls_name}.cluster_detail.png"
+    cluster_plot_detail(C, cls_name, info['cluster_detail'])
     #info['motif_detail'] = motif_plot_detail(gpx)
-    info['cluster_detail'] = cluster_plot_detail(C, cls_name)
 
-    out = f"{dir_}detail_{options['prefix']}.{cls_name}.json"
+    out = f"{dir_}{options['prefix']}.{cls_name}.detail.json"
     with open(out, "w") as f:
         json.dump(info, f)
     print(f"Motif plot [full]: {out}")

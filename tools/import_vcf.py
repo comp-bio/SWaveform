@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import sys, os, re, time, sqlite3
+import sys, os, time, sqlite3
 from _functions import *
 from vcf2score import Variants
 
@@ -82,6 +82,8 @@ counts = {}
 reader = Variants(filename=options['vcf'])
 for chr, L, R, sv_type, rec in reader.info():
     echo('Chr: %s   \r' % chr)
+    if 'is_filtered' in rec and rec.is_filtered:
+        continue
     for sample in rec.samples:
         name = sample.sample
         if options['sample'] != None:
@@ -102,13 +104,17 @@ for chr, L, R, sv_type, rec in reader.info():
                 samples_not_found[name] = True
                 continue
 
+        if hasattr(sample.data, 'FT') and isinstance(sample.data.FT, list) and len(sample.data.FT) > 0:
+            if sample.data.FT[0][0:4] == 'FAIL':
+                continue
+
         if not hasattr(sample.data, 'GT'):
             continue
 
-        gt = re.sub('[1-9][0-9]{0,}', '1', sample.data.GT).count('1')
-        if sample.data.GT == '-34': gt = -34
-        if gt == 0:
-            continue
+        gtl = [int(v.replace('.', '0')) for v in sample.data.GT.replace('|', '/').split('/')]
+        if len(gtl) != 2 or gtl[0] + gtl[1] == 0: continue
+        gt = 2 if gtl[0] == gtl[1] else 1
+        gtt = sample.data.GT[0:16]
 
         obj = cur.execute("SELECT * FROM target WHERE name = '%s'" % name).fetchone()
         if obj:
@@ -120,30 +126,32 @@ for chr, L, R, sv_type, rec in reader.info():
             targets.append(name)
 
         if sv_type == 'CNV':
-            if 'data' in sample.__dir__() and 'CNF' in sample.data.__dir__():
+            if 'data' in sample.__dir__() and 'CN' in sample.data.__dir__():
                 # sv_type = 'CNV_gain' if sample.data.CNF > 1 else 'CNV_loss'
-                if sample.data.CNF > 1.5: sv_type = 'CNV_gain'
-                if sample.data.CNF < 1.0: sv_type = 'CNV_loss'
+                if sample.data.CN > 2.0: sv_type = 'CNV_gain'
+                if sample.data.CN < 2.0: sv_type = 'CNV_loss'
                 if sv_type == 'CNV': continue
 
         if sv_type == 'INS':
             L = R
 
         if sv_type not in counts:
-            counts[sv_type] = 0
+            counts[sv_type] = {'L+R':0, 'BP':0, 'spSV':0}
 
-        counts[sv_type] += 1
         if R == L:
-            signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'BP', L, gt, ''))
+            signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'BP', L, gt, gtt, ''))
+            counts[sv_type]['BP'] += 1
         if R - L > offset:
-            signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'L', R - L, gt, ''))
-            signals.append((None, target_id, chr, R - offset, R + offset - 1, sv_type, 'R', R - L, gt, ''))
+            signals.append((None, target_id, chr, L - offset, L + offset - 1, sv_type, 'L', R - L, gt, gtt, ''))
+            signals.append((None, target_id, chr, R - offset, R + offset - 1, sv_type, 'R', R - L, gt, gtt, ''))
+            counts[sv_type]['L+R'] += 1
         else:
             if R - L >= special:
                 spSV = L + int((R - L) * spp)
-                signals.append((None, target_id, chr, spSV - offset, spSV + offset - 1, sv_type, 'spSV', spSV, gt, ''))
+                signals.append((None, target_id, chr, spSV - offset, spSV + offset - 1, sv_type, 'spSV', spSV, gt, gtt, ''))
+                counts[sv_type]['spSV'] += 1
 
-cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?,?)", signals)
+cur.executemany("INSERT INTO signal VALUES (?,?,?,?,?,?,?,?,?,?,?)", signals)
 con.commit()
 
 echo('Done%s\n' % (" " * 60))
@@ -152,4 +160,5 @@ echo('> New targets: %d\n' % len(targets))
 if len(samples_not_found) > 0:
     echo('> Samples not found: %s\n' % [k for k in samples_not_found])
 for k in counts:
-    echo(f'• {k}: {counts[k]}\n')
+    echo(f'• {k} | ' + "| ".join([f"{tp}:{counts[k][tp]} " for tp in counts[k]]) + '\n')
+

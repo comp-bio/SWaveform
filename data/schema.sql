@@ -19,7 +19,8 @@ CREATE TABLE IF NOT EXISTS "signal" (
   "type" text(128) NOT NULL, -- 'Structural variation Type',
   "side" text(32) NOT NULL, -- 'Left, right or default breakpoint of the SV (L, R, BP)',
   "size" integer NOT NULL, -- 'SV size (Distance between breakpoints)',
-  "genotype" integer NOT NULL, -- 'Genotype (1 for 1/0, 2 for 1/1)',
+  "genotype" integer NOT NULL, -- 'Genotype (1 for HET, 2 for HOM)',
+  "genotype_text" text(16) NOT NULL, -- 'Genotype in VCF (text, ex: 1/1)',
   "coverage_offset" integer NOT NULL, -- 'Coverage offset (for ext. binary file)',
   FOREIGN KEY ("target_id") REFERENCES "target" ("id")
 );

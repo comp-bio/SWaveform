@@ -7,6 +7,16 @@ class LoadSignal {
         this.page = 0;
     }
 
+    sig(where) {
+        axios({
+            url: `/api/signal_raw`,
+            method: 'post',
+            data: {'where': where},
+        }).then((res) => {
+            this.parent.setState({'data:signal': res.data});
+        });
+    }
+
     get(append = false) {
         if (this.cancel) this.cancel.cancel('Request canceled by user');
 
