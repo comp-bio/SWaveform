@@ -6,7 +6,7 @@ from vcf2score import Variants
 options = {
   'db': time.strftime('signal-%Y_%m_%d-%H_%M_%S'),
   'offset': 256,
-  'special': 30,
+  'special': 20,
   'spp': 0,
   'genome': 'GRCh38',
   'sample': None,
@@ -30,7 +30,7 @@ if len(options['vcf']) == 0 or len(options['meta']) == 0:
     echo('    offset:[BND offset in bases (integer, >16, default: 256)] \\\n')
     echo('    genome:[human genome version, default GRCh38] \\\n')
     echo('    special:[if SV is less than `offset` and greater than this parameter, \n')
-    echo('      save it as an additional breakpoint with type `spSV`, default: 30*] \\\n')
+    echo('      save it as an additional breakpoint with type `spSV`, default: 20*] \\\n')
     echo('    spp:[number from 0 to 1. Specify the center of SV around which offset \n')
     echo('      will be taken, default: 0.5*]\n')
     echo('\n')

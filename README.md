@@ -264,7 +264,7 @@ python3 tools/import_vcf.py \
   offset:[BND offset in bases (integer, >16, default: 256)] \
   genome:[human genome version, default GRCh38] \
   special:[if SV is less than `offset` and greater than this parameter, 
-    save it as an additional breakpoint with type `spSV`, default: 30*] \
+    save it as an additional breakpoint with type `spSV`, default: 20*] \
   spp:[number from 0 to 1. Specify the center of SV around which offset 
     will be taken, default: 0.5*]
 ```

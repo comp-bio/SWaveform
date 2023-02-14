@@ -160,12 +160,12 @@ for ds in info['ds']:
     chrom = karyotypes[ info['ds'][ds]['genome'] ]
     for chr in chrom:
         chr_len = chrom[chr][-1][1]
-        step = round(chr_len/(1000-1))
+        step = round(chr_len/(240-1))
         cur.execute(f"SELECT COUNT(*), cast((`start`+256)/{step} as int) AS ro FROM signal "
                     f"LEFT JOIN target ON target.id = signal.target_id "
                     f"WHERE (signal.chr = '{chr}' or signal.chr = 'chr{chr}') and target.dataset = '{ds}' GROUP BY ro")
         density = {int(pos):cnt for cnt, pos in cur.fetchall()}
-        all = [(0 if i not in density else density[i]) for i in range(0, 1000)]
+        all = [(0 if i not in density else density[i]) for i in range(0, 240)]
         c = chr.replace('chr','')
         info['ds'][ds]['density'][c] = {'l': all, 'step': step}
 
